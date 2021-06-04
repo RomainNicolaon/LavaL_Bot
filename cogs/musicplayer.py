@@ -72,7 +72,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
         self.stream_url = data.get('url')
 
     def __str__(self):
-        return '**{0.title}** by **{0.uploader}**'.format(self)
+        return '**__{0.title}__** by **{0.uploader}**'.format(self)
 
     @classmethod
     async def create_source(cls, ctx: commands.Context, search: str, *, loop: asyncio.BaseEventLoop = None):
@@ -147,7 +147,7 @@ class Song:
         self.requester = source.requester
 
     def create_embed(self):
-        embed = (discord.Embed(title='Now playing',
+        embed = (discord.Embed(title=':notes:  Now playing',
                                description='```css\n{0.source.title}\n```'.format(
                                    self),
                                color=0xE34747)
@@ -496,7 +496,7 @@ class Music(commands.Cog, name="music"):
                 song = Song(source)
 
                 await ctx.voice_state.songs.put(song)
-                await ctx.send('Now playing {}'.format(str(source)))
+                await ctx.send('<:youtube:850462582523166751> Now playing {}'.format(str(source)))
 
     @_join.before_invoke
     @_play.before_invoke
