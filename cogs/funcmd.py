@@ -11,20 +11,23 @@ class Funcmd(commands.Cog, name="funcmd"):
 		self.bot = bot
   
 	@commands.command(name='streamers', aliases=['st'])
-	async def streamers(self, ctx):
+	async def streamers_list(self, ctx):
 		embed = discord.Embed(title="Streamers", description="Liste de vos Streamers préférés", color=0xE019F7, colour=discord.Colour(0xE019F7))
 		embed.add_field(name="LavaL", value="https://www.twitch.tv/laval_tv", inline=False)
 		embed.add_field(name="LufFi", value="https://www.twitch.tv/luffiiiii", inline=False)
-		embed.add_field(name="Rony", value="https://www.twitch.tv/ronytv_", inline=False)
+		embed.add_field(name="Thor", value="https://www.twitch.tv/th0rtv_", inline=False)
+		embed.add_field(name="Marjolie", value="https://www.twitch.tv/marjoliegamefr", inline=False)
+		embed.add_field(name="Black_One", value="https://www.twitch.tv/mjf_blak_one", inline=False)
+
 		embed.set_thumbnail(url="https://gdncoworldwidemedia.com/wp-content/uploads/2020/07/twitch_web.png")
 		embed.set_footer(text="Requested by : "+str(ctx.message.author.name) +" "+ str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.avatar_url)
 		await ctx.send(embed=embed)
   
 	@commands.command(name='avatar', aliases=['a'])
 	async def getpfp(self, ctx, member: Member = None):
-		pfp = member.avatar_url
 		if not member:
 			member = ctx.author
+		pfp = member.avatar_url
 		embed = discord.Embed(title=f"Affiche la photo de profile de {member.name}#{member.discriminator}", color=0x00000, description=f"[Avatar URL]({pfp})")
 
 		embed.set_image(url=pfp)

@@ -49,6 +49,8 @@ class Info(commands.Cog, name="info"):
 	@commands.command(name="infos", aliases=["i"])
 	async def infos(self, ctx):
 		embed = discord.Embed(title="Donne des informations sur moi", color=0x4F2B10, description="Yo, je suis le bot de <@!405414058775412746>, pour m'utiliser, tapez la commande : \n```?help``` ```??```  ```?h```", colour=discord.Colour(0x4F2B10))
+  
+		embed.add_field(name="Ajoutes moi sur ton serveur :", value="https://discord.com/api/oauth2/authorize?client_id=808008104628322334&permissions=8&scope=bot")
 
 		embed.set_thumbnail(url="https://steemitimages.com/DQmbQ9tUdvP98ruzMX6gCjXWz6N5yMBHbn7oJ1WeiiQoj68/16361360.png")
 

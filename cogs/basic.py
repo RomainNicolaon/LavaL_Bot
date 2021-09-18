@@ -4,7 +4,6 @@ import discord
 
 from discord.ext import commands
 
-
 class Basic(commands.Cog, name="basic"):
     """Basic description"""
 
@@ -15,100 +14,82 @@ class Basic(commands.Cog, name="basic"):
     async def help(self, ctx):
         page1 = discord.Embed(
             title='Commandes générales',
-            description='Page 1/7',
+            description='Page 1/6',
             colour=discord.Colour.orange())
-        page1.add_field(name="```?help``` ```??``` ```?h```",
+        page1.add_field(name="`?help` `??` `?h`",
                         value="Liste de toute les commandes", inline=False)
-        page1.add_field(name="```?infos``` ```?i```",
+        page1.add_field(name="`?infos` `?i`",
                         value="Donne des informations sur le bot", inline=False)
-        page1.add_field(name="```?server``` ```?serv``` ```?s```",
+        page1.add_field(name="`?server` `?serv` `?s`",
                         value="Donne des informations sur le serveur", inline=False)
-        page1.add_field(name="```?ping```",
+        page1.add_field(name="`?ping`",
                         value="Temps de réponse du bot", inline=False)
-        page1.add_field(name="```?avatar``` ```?a```",
+        page1.add_field(name="`?avatar` `?a`",
                         value="Affiche la photo de profil de la personne mentionnée", inline=False)
 
         page2 = discord.Embed(
             title='Commandes fun',
-            description='Page 2/7',
+            description='Page 2/6',
             colour=discord.Colour.orange())
         page2.add_field(
-            name="```?punch```", value="Frappe violemment la personne mentionnée", inline=False)
+            name="`?punch`", value="Frappe violemment la personne mentionnée", inline=False)
         page2.add_field(
-            name="```?kiss```", value="Embrasse passionnément la personne mentionnée", inline=False)
+            name="`?kiss`", value="Embrasse passionnément la personne mentionnée", inline=False)
         page2.add_field(
-            name="```?hug```", value="Faire un gros câlin à la personne mentionnée", inline=False)
+            name="`?hug`", value="Faire un gros câlin à la personne mentionnée", inline=False)
         page2.add_field(
-            name="```?stat``` ```?status``` ```?graph``` ```?gs``` ```?sg```", value="Stats", inline=False)
-        page2.add_field(name="```?emojilist``` ```?ce``` ```?el```",
+            name="`?stat` `?status` `?graph` `?gs` `?sg`", value="Stats", inline=False)
+        page2.add_field(name="`?emojilist` `?ce` `?el`",
                         value="Emoji list", inline=False)
 
         page3 = discord.Embed(
             title='Commandes fun',
-            description='Page 3/7',
+            description='Page 3/6',
             colour=discord.Colour.orange())
         page3.add_field(
-            name="```?addprivate {channel}``` ```?create``` ```?add``` ```?+``` ```?>```", value="Nouveau salon textuel", inline=False)
-        page3.add_field(name="```?delprivate {channel}``` ```?delete``` ```?del``` ```?-``` ```?<```",
+            name="`?addprivate {channel}` `?create` `?add` `?+` `?>`", value="Nouveau salon textuel", inline=False)
+        page3.add_field(name="`?delprivate {channel}` `?delete` `?del` `?-` `?<`",
                         value="Supprimer salon textuel", inline=False)
-        page3.add_field(name="```?spotify``` ```?spy``` ```?spot```",
+        page3.add_field(name="`?spotify` `?spy` `?spot`",
                         value="Infos spotify", inline=False)
-        page3.add_field(
-            name="```?strawpoll``` ```?straw``` ```?stp``` ```?sond``` ```?sondage```", value="Sondage", inline=False)
-        page3.add_field(name="```?streamers``` ```?st```",
+        page3.add_field(name="`?strawpoll` `?straw` `?stp` `?sond` `?sondage`", value="Sondage", inline=False)
+        page3.add_field(name="`?streamers` `?st`",
                         value="Liste des meilleurs streamers", inline=False)
 
         page4 = discord.Embed(
             title='Commandes admin',
-            description='Page 4/7',
+            description='Page 4/6',
             colour=discord.Colour.orange())
-        page4.add_field(name="```?deletechannel {channel}``` ```?dc```",
+        page4.add_field(name="`?deletechannel {channel}` `?dc`",
                         value="Supprimer le channel choisi", inline=False)
-        page4.add_field(
-            name="```?deletemessage {n}``` ```?dm```", value="Supprimer n messages", inline=False)
+        page4.add_field(name="`?deletemessage {n}` `?dm`",
+                        value="Supprimer n messages", inline=False)
 
         page5 = discord.Embed(
             title='Commandes Musique',
-            description='Page 5/7',
+            description='Page 5/6',
             colour=discord.Colour.orange())
-        page5.add_field(name="```?join```",
+        page5.add_field(name="`?join`",
                         value="Le bot rejoint ton salon vocal", inline=False)
-        page5.add_field(name="```?summon```",
-                        value="Le bot rejoins le salon vocal de ton choix", inline=False)
-        page5.add_field(name="```?leave```",
+        # page5.add_field(name="`?summon`",
+        #                 value="Le bot rejoins le salon vocal de ton choix", inline=False)
+        page5.add_field(name="`?disconnect` `?leave` `?deco`",
                         value="Le bot quitte le salon vocal", inline=False)
-        page5.add_field(
-            name="```?play```", value="Jouer une musique (nom ou lien Youtube)", inline=False)
-        page5.add_field(name="```?skip```",
-                        value="Passe à la prochaine muqiue", inline=False)
+        page5.add_field(name="`?play` `?p`", 
+                        value="Jouer une musique (nom ou lien Youtube)", inline=False)
 
         page6 = discord.Embed(
             title='Commandes Musique',
-            description='Page 6/7',
+            description='Page 6/6',
             colour=discord.Colour.orange())
-        page6.add_field(name="```?now```",
-                        value="Musique en cours", inline=False)
-        page6.add_field(name="```?pause```",
+        page6.add_field(name="`?pause`",
                         value="Musique en pause", inline=False)
-        page6.add_field(name="```?resume```",
+        page6.add_field(name="`?resume`",
                         value="Reprise de la musique", inline=False)
-        page6.add_field(name="```?stop```",
+        page6.add_field(name="`?stop`",
                         value="La musique s'arrete", inline=False)
 
-        page7 = discord.Embed(
-            title='Commandes Musique',
-            description='Page 7/7',
-            colour=discord.Colour.orange())
-        page7.add_field(name="```?queue```",
-                        value="Affiche la liste des musiques", inline=False)
-        page7.add_field(name="```?shuffle```",
-                        value="Lecture des musiques en aléatoire", inline=False)
-        page7.add_field(name="```?remove```",
-                        value="SUpprime une musique de la liste", inline=False)
-        page7.add_field(name="```?loop```",
-                        value="Lecture en boucle", inline=False)
-
-        pages = [page1, page2, page3, page4, page5, page6, page7]
+        pages = [page1, page2, page3, page4, page5, page6]
 
         message = await ctx.send(embed=page1)
         await message.add_reaction('⏮')
@@ -135,7 +116,7 @@ class Basic(commands.Cog, name="basic"):
                     i += 1
                     await message.edit(embed=pages[i])
             elif str(reaction) == '⏭':
-                i = 6
+                i = 5
                 await message.edit(embed=pages[i])
 
             try:
@@ -213,12 +194,12 @@ class Basic(commands.Cog, name="basic"):
                          str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.avatar_url)
         await ctx.send(embed=embed)
 
-    @commands.Cog.listener('on_command_error')
-    async def get_command_error(self, ctx, error):
-        if isinstance(error, commands.CommandNotFound):
-            await ctx.send(error)
-        else:
-            await ctx.send("`C0DE 3RR0R` : "+error)
+    # @commands.Cog.listener('on_command_error')
+    # async def get_command_error(self, ctx, error):
+    #     if isinstance(error, commands.CommandNotFound):
+    #         await ctx.send(error)
+    #     else:
+    #         await ctx.send("`C0DE 3RR0R` : "+error)
 
 
 def setup(bot):

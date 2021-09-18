@@ -3,11 +3,17 @@ import discord
 
 from discord.ext import commands
 
-
-class PrivateVocal(commands.Cog, name="privatevocal"):
+class PrivateVocal(commands.Cog, name="privatevocal", command_attrs=dict(hidden=True)):
+	"""Create a voice channel when all are taken, initial channel : 'General'"""
 	def __init__(self, bot):
 		self.bot = bot
 		self.task_if_connected = self.bot.loop.create_task(self.loop_if_connected())
+
+	"""def help_custom(self):
+		emoji = '💭'
+		label = "Vocal"
+		description = "Auto vocal channels."
+		return emoji, label, description"""
 
 	def return_loop_task(self):
 		return self.task_if_connected
@@ -40,7 +46,7 @@ class PrivateVocal(commands.Cog, name="privatevocal"):
 					is_change = False
 
 					if usedChannels == len(data[guild.id]):
-						a = await guild.create_voice_channel(name="Vocal", category=category, sync_permissions=True)
+						a = await guild.create_voice_channel(name="Vocal", category=category)
 						data[guild.id].append(a)
 						is_change = True
 
