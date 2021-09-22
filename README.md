@@ -1,6 +1,6 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/LavaL18/Algosup-Discord)
 
-# LavaL_Bot
+# LavaL_Bot *forked from [Algobot](https://github.com/PaulMarisOUMary/Algosup-Discord)*
 
 # Setting up the bot
 
@@ -23,4 +23,5 @@
   - Edit line `12` on `bot.py` to change the bot prefix : `command_prefix=commands.when_mentioned_or("PREFIX_HERE")`.
   - If you want to use admin commands edit the line `7` on `cogs/admin.py`and paste your user ID (more informations [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID-))
   
+	forked from [Algobot](https://github.com/PaulMarisOUMary/Algosup-Discord)
 </details>
