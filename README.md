@@ -1,4 +1,4 @@
-![GitHub last commit](https://img.shields.io/github/last-commit/LavaL18/Algosup-Discord)
+![GitHub last commit](https://img.shields.io/github/last-commit/LavaL18/LavaL_Bot)
 
 ## LavaL_Bot 
 *(forked from [Algobot](https://github.com/PaulMarisOUMary/Algosup-Discord))*
