@@ -27,7 +27,7 @@
 
 ## Contributors
 
-[![contributors]<a href = "https://github.com/Tanu-N-Prabhu/Python/graphs/contributors">
+[![contributors]<a href = "https://github.com/LavaL18/LavaL_Bot/graphs/contributors">
   <img src = "https://contrib.rocks/image?repo = GitHub_username/repository_name"/>
 </a>
 
