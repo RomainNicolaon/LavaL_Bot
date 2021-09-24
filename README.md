@@ -27,6 +27,4 @@
 
 ## Contributors
 
-[![contributors](https://github.com/LavaL18/LavaL_Bot/graphs/contributors)
-
-
+[![contributors](https://contributors-img.web.app/image?repo=LavaL18%20%2F%20LavaL_Bot)](https://github.com/spotdl/spotify-downloader/graphs/contributors)
