@@ -33,4 +33,4 @@
 ## Authors
 
 1. [@LavaL_18](https://github.com/LavaL_19) Creator of [LavaL Bot](https://github.com/LavaL18/LavaL_Bot)
-2. [Paul Maris]
+2. [@Paul Maris](https://github.com/PaulMarisOUMary) LavaL Bot is a fork of [Algosup-Discord](https://github.com/PaulMarisOUMary/Algosup-Discord)'template
