@@ -28,3 +28,8 @@
 ## Contributors
 
 [![contributors](https://contributors-img.web.app/image?repo=LavaL18%20%2F%20LavaL_Bot)](https://github.com/LavaL18/LavaL_Bot/graphs/contributors)
+
+## Authors
+
+1. [@LavaL_18](https://github.com/LavaL_19) Creator of [LavaL Bot](https://github.com/LavaL18/LavaL_Bot)
+2. [Paul Maris]
