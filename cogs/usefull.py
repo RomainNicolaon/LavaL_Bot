@@ -1,26 +1,37 @@
-import time
 import discord
 
 from discord.ext import commands
 
-
-class Usefull(commands.Cog, name="usefull"):
-	"""Usefull description"""
+class Usefull(commands.Cog, name="usefull", command_attrs=dict(hidden=False)):
+	"""Commandes utiles pour les développeurs et autres"""
 	def __init__(self, bot):
 		self.bot = bot
 
+	def help_custom(self):
+		emoji = '🚩'
+		label = "Utile"
+		description = "Commandes utiles."
+		return emoji, label, description
+
 	@commands.command(name='strawpoll', aliases=['straw', 'stp', 'sond', 'sondage'], pass_context=True)
-	async def ping(self, ctx, *, context):
-		crossmark, checkmark = self.bot.get_emoji(844992841938894849), self.bot.get_emoji(844992804480352257)
+	async def strawpool(self, ctx, *, context):
+		"""Posez un sondage, et ajoutez 2 réactions pour voter avec votre communauté."""
+		crossmark, checkmark = self.bot.get_emoji(842800737221607474), self.bot.get_emoji(842800730049871892)
 		await ctx.message.delete()
 		message = await ctx.send("__*" + ctx.message.author.mention + "*__ : " + context)
 		await message.add_reaction(emoji=checkmark)
 		await message.add_reaction(emoji=crossmark)
 
+	@commands.command(name='profilepicture', aliases=['pp'])
+	async def strawpool(self, ctx, member : discord.Member = None):
+		"""Affiche la photo de profil du membre sélectionné."""
+		author = member if member else ctx.message.author
+		await ctx.send(author.display_avatar.url)
 
 	@commands.command(name='emojilist', aliases=['ce', 'el'], pass_context=True)
 	async def getcustomemojis(self, ctx):
-		embed_list, embed = [], discord.Embed(title="Custom Emojis List ("+str(len(ctx.guild.emojis))+") :")
+		"""Renvoie une liste de tous les emojis cutom du serveur actuel."""
+		embed_list, embed = [], discord.Embed(title="Liste d'emojis personnalisés ("+str(len(ctx.guild.emojis))+") :")
 		for i, emoji in enumerate(ctx.guild.emojis, start=1):
 			if i == 0 : i += 1
 			value = "`<:"+str(emoji.name)+":"+str(emoji.id)+">`" if not emoji.animated else "`<a:"+str(emoji.name)+":"+str(emoji.id)+">`"

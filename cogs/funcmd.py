@@ -5,34 +5,29 @@ import random
 from discord.ext import commands
 from discord import Member
 
-class Funcmd(commands.Cog, name="funcmd"):
-	"""Funcmd description"""
+class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
+	"""Description des commandes pour le fun"""
 	def __init__(self, bot):
 		self.bot = bot
-  
-	@commands.command(name='streamers', aliases=['st'])
-	async def streamers_list(self, ctx):
-		embed = discord.Embed(title="Streamers", description="Liste de vos Streamers préférés", color=0xE019F7, colour=discord.Colour(0xE019F7))
-		embed.add_field(name="LavaL", value="https://www.twitch.tv/laval_tv", inline=False)
-		embed.add_field(name="LufFi", value="https://www.twitch.tv/luffiiiii", inline=False)
-		embed.add_field(name="Thor", value="https://www.twitch.tv/th0rtv_", inline=False)
-		embed.add_field(name="Marjolie", value="https://www.twitch.tv/marjoliegamefr", inline=False)
-		embed.add_field(name="Black_One", value="https://www.twitch.tv/mjf_blak_one", inline=False)
 
-		embed.set_thumbnail(url="https://gdncoworldwidemedia.com/wp-content/uploads/2020/07/twitch_web.png")
-		embed.set_footer(text="Requested by : "+str(ctx.message.author.name) +" "+ str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.avatar_url)
-		await ctx.send(embed=embed)
+	def help_custom(self):
+		emoji = '<a:CatGunner:876156284557221929>'
+		label = "Commandes Fun"
+		description = "Commandes pour le fun, comme avatar, etc.."
+		return emoji, label, description
   
 	@commands.command(name='avatar', aliases=['a'])
 	async def getpfp(self, ctx, member: Member = None):
+		"""Affiche la photo de profil (soi même ou un utilisateur"""
 		if not member:
 			member = ctx.author
-		pfp = member.avatar_url
+		pfp = member.display_avatar.url
 		embed = discord.Embed(title=f"Affiche la photo de profile de {member.name}#{member.discriminator}", color=0x00000, description=f"[Avatar URL]({pfp})")
 
 		embed.set_image(url=pfp)
 
-		embed.set_footer(text="Requested by : "+str(ctx.message.author.name) +" "+ str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.avatar_url)
+		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " +
+						 str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.display_avatar.url)
 
 		await ctx.send(embed=embed)
 
@@ -50,7 +45,8 @@ class Funcmd(commands.Cog, name="funcmd"):
 
 		embed.set_image(url=gif_hug)
 
-		embed.set_footer(text="Requested by : "+str(ctx.message.author.name) +" "+ str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.avatar_url)
+		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " +
+						 str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.display_avatar.url)
 
 		await ctx.send(embed=embed)
 
@@ -68,7 +64,8 @@ class Funcmd(commands.Cog, name="funcmd"):
 
 		embed.set_image(url=gif_kiss)
 
-		embed.set_footer(text="Requested by : "+str(ctx.message.author.name) +" "+ str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.avatar_url)
+		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " +
+						 str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.display_avatar.url)
 
 		await ctx.send(embed=embed)
 
@@ -85,21 +82,9 @@ class Funcmd(commands.Cog, name="funcmd"):
 
 		embed.set_image(url=gif_punch)
 
-		embed.set_footer(text="Requested by : "+str(ctx.message.author.name) +" "+ str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.avatar_url)
+		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " +
+						 str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.display_avatar.url)
 
-		await ctx.send(embed=embed)
-  
-	@commands.command(name='hottub', aliases=['htb'])
-	async def streamers(self, ctx):
-		embed = discord.Embed(title="Streameuses HotTub", description="Liste de vos ||putes|| préférées", color=0xF9429E, colour=discord.Colour(0xE019F7))
-		embed.add_field(name="Amouranth", value="https://www.twitch.tv/amouranth?sr=a", inline=False)
-		embed.add_field(name="GloriaMatvien", value="https://www.twitch.tv/gloriamatvien?sr=a", inline=False)
-		embed.add_field(name="ritaglitch", value="https://www.twitch.tv/ritaglitch?sr=a", inline=False)
-		embed.add_field(name="MistressMord", value="https://www.twitch.tv/mistressmord?sr=a", inline=False)
-		embed.add_field(name="YuriJoa", value="https://www.twitch.tv/yurijoa?sr=a", inline=False)
-		embed.add_field(name="proecteva", value="https://www.twitch.tv/proecteva?sr=a", inline=False)
-		embed.set_thumbnail(url="https://gdncoworldwidemedia.com/wp-content/uploads/2020/07/twitch_web.png")
-		embed.set_footer(text="Requested by : "+str(ctx.message.author.name) +" "+ str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.avatar_url)
 		await ctx.send(embed=embed)
 
 def setup(bot):

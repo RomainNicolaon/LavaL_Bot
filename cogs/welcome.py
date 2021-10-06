@@ -9,10 +9,16 @@ from PIL import Image, ImageDraw, ImageFont, ImageChops
 from io import BytesIO
 
 
-class Joinserv(commands.Cog, name="joinserv"):
-	"""Welcome description"""
+class Joinserv(commands.Cog, name="joinserv", command_attrs=dict(hidden=False)):
+	"""Description des commandes bienvenue"""
 	def __init__(self, bot):
 		self.bot = bot
+
+	def help_custom(self):
+		emoji = ':🥳:'
+		label = "Bienvenue"
+		description = "Informations sur l'accueil global"
+		return emoji, label, description
 
 	@commands.Cog.listener()
 	async def on_member_join(self, member):
@@ -75,9 +81,9 @@ class Joinserv(commands.Cog, name="joinserv"):
 		draw.text((25,370), text, font=font, fill=(255,255,255,128))
   
 		card.save("img/profile.png")
-  
-		profile = discord.File("img/profile.png")
+
 		picture = discord.File("img/pfp.png")
+		profile = discord.File("img/profile.png")
   
 		await ctx.send(file = profile)
 		# await channel.send(file = picture)

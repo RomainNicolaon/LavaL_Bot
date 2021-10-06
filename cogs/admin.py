@@ -3,19 +3,51 @@ from re import S, purge
 import ssl
 import discord
 from discord import channel
+import types
+import sys
+import os
 
 from discord.ext import commands
-
-async def is_owner(ctx):
-	return ctx.author.id == 405414058775412746
+from importlib import reload
 
 class Admin(commands.Cog, name="admin", command_attrs=dict(hidden=True)):
 	"""Admin description"""
 	def __init__(self, bot):
 		self.bot = bot
 
+	def help_custom(self):
+		emoji = '⚙️'
+		label = "Admin"
+		description = "Affiche la liste des commandes admin."
+		return emoji, label, description
+
+	async def reload_views(self):
+		modules, infants = [], []
+		for module in sys.modules.items():
+			if isinstance(module[1], types.ModuleType):
+				modules.append(module[1])
+
+		for module in modules:
+			try:
+				if os.path.basename(os.path.dirname(module.__file__)) == "views":
+					reload(module)
+					infants.append(module.__name__)
+			except: pass
+
+		return infants
+
+	async def reload_cogs(self, cogs):
+		victims = []
+		for cog in cogs:
+			norm_cog = self.bot.get_cog(cog[5:len(cog)])
+			if "return_loop_task" in dir(norm_cog): 
+				norm_cog.return_loop_task().cancel()
+				victims.append(cog)
+			self.bot.reload_extension(cog)
+		return victims
+
 	@commands.command(name='reloadall', aliases=['rell', 'relall'])
-	@commands.check(is_owner)
+	@commands.is_owner()
 	async def reload_all_cogs(self, ctx):
 		victim, victim_list, botCogs, safeCogs = 0, [], self.bot.extensions, []
 		try:
@@ -37,7 +69,7 @@ class Admin(commands.Cog, name="admin", command_attrs=dict(hidden=True)):
 			await ctx.send(succes_text)
 
 	@commands.command(name='reload', aliases=['rel'], require_var_positional=True)
-	@commands.check(is_owner)
+	@commands.is_owner()
 	async def reload_cogs(self, ctx, cog):
 		victim, cog, g_cog = 0, 'cogs.'+cog, self.bot.get_cog(cog)
 		try:
@@ -50,8 +82,21 @@ class Admin(commands.Cog, name="admin", command_attrs=dict(hidden=True)):
 		else:
 			await ctx.send(':metal: '+cog+' reloaded ! : __`' + str(victim) + ' task killed`__')
 
+	@commands.command(name='reloadviews', aliases=['rmod', 'rview', 'rviews'])
+	@commands.is_owner()
+	async def reload_view(self, ctx):
+		"""Reload each registered views."""
+		try:
+			infants = await self.reload_views()
+		except commands.ExtensionError as e:
+			await ctx.send(f'{e.__class__.__name__}: {e}')
+		else:
+			succes_text = '👌 All views reloaded ! | 🔄 __`'+str(len(infants))+' view(s) reloaded`__ : '
+			for infant in infants: succes_text += "`"+str(infant).replace('views.', '')+"` "
+			await ctx.send(succes_text)
+
 	@commands.command(name='killloop', aliases=['kill'], require_var_positional=True)
-	@commands.check(is_owner)
+	@commands.is_owner()
 	async def kill_loop(self, ctx, cog):
 		cogs = self.bot.get_cog(cog)
 		if "return_loop_task" in dir(cogs):
@@ -66,39 +111,20 @@ class Admin(commands.Cog, name="admin", command_attrs=dict(hidden=True)):
 		while channel:
 			await channel.delete()
 			channel = discord.utils.get(ctx.guild.channels, name=channel_name)
-		await ctx.send("All channels named `"+str(channel_name)+"` as been succesfuly deleted")
+		await ctx.send("Tout les channels appelés `"+str(channel_name)+"` ont bien été supprimés")
   
 	@commands.command(name="deletemessage", aliases=['dm'])
-	@commands.check(is_owner)
+	@commands.is_owner()
 	async def delete_message(self, ctx, number: int):
 		messages = await ctx.channel.history(limit=number + 1).flatten()
 		for each_message in messages:
 			await each_message.delete()
 
 	@commands.command(name="clear")
-	@commands.check(is_owner)
+	@commands.is_owner()
 	async def clear(self, ctx, amount=10):
+		"""Supprime 10 message"""
 		await ctx.channel.purge(limit=amount)
-
-	@reload_all_cogs.error
-	async def reload_all_cogs_error(self, ctx, error):
-		if isinstance(error, commands.CheckFailure):
-			await ctx.send('Error, you are not authorized to type that !')
-		else:
-			await ctx.send('Error')
-		await ctx.message.add_reaction(emoji='❌')
-
-	@reload_cogs.error
-	async def reload_cogs_error(self, ctx, error):
-		if isinstance(error, commands.MissingRequiredArgument):
-			await ctx.send('Please specify which cogs')
-		elif isinstance(error, commands.CheckFailure):
-			await ctx.send('Error, you are not authorized to type that !')
-		else:
-			await ctx.send('Error, check the argument(s) provided')
-		await ctx.message.add_reaction(emoji='❌')
-	
-	
 
 def setup(bot):
 	bot.add_cog(Admin(bot))
