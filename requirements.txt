@@ -1,0 +1,15 @@
+git+https://github.com/Rapptz/discord.py
+.[voice]
+discord.py==2.0.0a
+requests
+PIL
+discord.ext
+matplotlib
+O365
+Pillow
+tzlocal==2.1
+youtube_dl
+asyncio
+time
+io
+PyNaCl
