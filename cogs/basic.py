@@ -1,14 +1,14 @@
-from os import name
 import time
+import asyncio
 import discord
 
 from discord.ext import commands
+from datetime import datetime, timedelta
+from views import help as vhelp
 
 from PIL import Image, ImageDraw, ImageFont, ImageChops
 from io import BytesIO
 import requests
-from datetime import datetime, timedelta
-from views import help as vhelp
 
 class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 	"""Description des commandes de base"""
@@ -25,7 +25,7 @@ class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 	async def help(self, ctx, *input):
 		"""Affiche le menu d'aide"""
 		if not input:
-			allowed = 2
+			allowed = 3
 			close_in = round(datetime.timestamp(datetime.now() + timedelta(minutes=allowed)))
 			embed = discord.Embed(color=discord.Color.dark_grey(), title = "👋 Aide · Acceuil", description = "`Bienvenue sur le menu d'aide.`\n\nUtilise `help command` pour avoir plus d'informations sur une commande.\nUtilise `help category` pour avoir plus d'informations sur une categorie.\nUtilise le menu déroulant ci-dessous pour sélectionner une catégorie.\n\u200b", url='https://github.com/LavaL18/LavaL_Bot')
 			embed.add_field(name="Temps restant avant la fin de la commande :", value="Cette session d'aide se terminera <t:"+str(close_in)+":R>.\nUtilise la commande `help` pour ouvrir une nouvelle cession d'aide.\n\u200b", inline=False)
