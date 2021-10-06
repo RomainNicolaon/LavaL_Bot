@@ -65,7 +65,7 @@ class PrivateVocal(commands.Cog, name="privatevocal", command_attrs=dict(hidden=
 							if not ch.name == MAIN_CHANNEL:
 								await ch.edit(name="Vocal "+str(i))
 
-			await asyncio.sleep(0.5)
+			await asyncio.sleep(30) # Attention, une valeur trop petite peut ralentir le bot !
 
 def setup(bot):
 	bot.add_cog(PrivateVocal(bot))
