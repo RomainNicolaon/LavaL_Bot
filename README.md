@@ -1,6 +1,7 @@
 ![GitHub is maintained](https://img.shields.io/maintenance/yes/2022?color=success)
 ![GitHub last commit](https://img.shields.io/github/last-commit/LavaL18/LavaL_Bot)
 ![](https://img.shields.io/pypi/pyversions/discord.py.svg)
+![GitHub last release](https://img.shields.io/github/v/release/LavaL18/LavaL_Bot?color=blueviolet)
 
 ## LavaL_Bot 
 *(forked from [Algobot](https://github.com/PaulMarisOUMary/Algosup-Discord))*
