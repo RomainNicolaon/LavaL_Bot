@@ -1,5 +1,11 @@
 ![GitHub is maintained](https://img.shields.io/maintenance/yes/2022?color=success)
 ![GitHub last commit](https://img.shields.io/github/last-commit/LavaL18/LavaL_Bot)
+.. image:: https://img.shields.io/pypi/v/discord.py.svg
+   :target: https://pypi.python.org/pypi/discord.py
+   :alt: PyPI version info
+.. image:: https://img.shields.io/pypi/pyversions/discord.py.svg
+   :target: https://pypi.python.org/pypi/discord.py
+   :alt: PyPI supported Python versions
 
 ## LavaL_Bot 
 *(forked from [Algobot](https://github.com/PaulMarisOUMary/Algosup-Discord))*
