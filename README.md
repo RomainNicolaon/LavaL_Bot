@@ -37,6 +37,11 @@ $ python3 -m pip install -U .[voice]
 
 5. (Optional) Edit line `10` in `bot.py` to change the bot prefix : `command_prefix=commands.when_mentioned_or("`*PREFIX_HERE*`")`.
 
+
+## Documentation
+
+[*link*](https://discordpy.readthedocs.io/en/master/)
+
 ## Contributors
 
 [![contributors](https://contrib.rocks/image?repo=LavaL18/LavaL_Bot)](https://github.com/LavaL18/LavaL_Bot/graphs/contributors)
