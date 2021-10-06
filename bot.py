@@ -7,7 +7,7 @@ intents = discord.Intents.default()
 intents.presences = True
 intents.members = True
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or("?"), description='LavaL Bot', intents=intents, help_command=None)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or("$"), description='Bot Test', intents=intents, help_command=None)
 
 current_directory = os.path.dirname(os.path.abspath(__file__))
 

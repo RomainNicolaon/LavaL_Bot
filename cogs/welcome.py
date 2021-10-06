@@ -63,9 +63,10 @@ class Joinserv(commands.Cog, name="joinserv", command_attrs=dict(hidden=False)):
 		text = f"Eh toi tu t'appelle bien {user.author.name} ?"
 
 		card = Image.open("img/background2.png")
-		asset = user.author.avatar_url
+
+		asset = user.author.display_avatar
 		data = BytesIO(await asset.read())
-		pfp = Image.open(data)
+		pfp = Image.open(data).convert('RGB')
 		pfp = pfp.resize((220,220))
 
 		pfp = add_corners(pfp, 100)

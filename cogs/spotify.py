@@ -63,7 +63,7 @@ class Spotify(commands.Cog, name="spotify", command_attrs=dict(hidden=False)):
 		background_image_color.paste(album_image_resize, (0, 0), album_image_resize)
 
 		# Save image
-		background_image_color.convert('RGB').save('spotify.jpg', 'JPEG')
+		background_image_color.convert('RGB').save('img/spotify.jpg', 'JPEG')
 
 		await ctx.send(file=discord.File('img/spotify.jpg'))
 
