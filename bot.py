@@ -3,14 +3,11 @@ import discord
 
 from discord.ext import commands
 
-from discord import Client, Intents, Embed
-
 intents = discord.Intents.default()
 intents.presences = True
 intents.members = True
 
-bot = commands.Bot(command_prefix=commands.when_mentioned_or("PREFIX_HERE"), description='LavaL Bot', intents=intents)
-bot.remove_command('help')
+bot = commands.Bot(command_prefix=commands.when_mentioned_or("?"), description='LavaL Bot', intents=intents, help_command=None)
 
 current_directory = os.path.dirname(os.path.abspath(__file__))
 
@@ -20,10 +17,10 @@ if __name__ == '__main__':
 		actual = os.path.splitext(cog)
 		if actual[1] == '.py':
 			bot.load_extension('cogs.'+actual[0])
-	
+
 @bot.event
 async def on_ready():
-	print("Logged in as: "+str(bot.user)+", His creator is LavaL#9240"+"\nVersion: "+str(discord.__version__))
+	print("Logged in as: "+str(bot.user)+"\nVersion: "+str(discord.__version__))
 
 token_file = open(os.path.join(current_directory, "auth", "token.dat"), "r").read()
 bot.run(token_file, reconnect=True)
