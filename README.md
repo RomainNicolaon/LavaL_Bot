@@ -40,7 +40,7 @@ $ python3 -m pip install -U .[voice]
 
 ## Documentation
 
-[*link*](https://discordpy.readthedocs.io/en/master/)
+https://discordpy.readthedocs.io/en/master/
 
 ## Contributors
 
