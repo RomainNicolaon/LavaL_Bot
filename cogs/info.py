@@ -1,6 +1,8 @@
 import io
 import time
+from typing import List
 import discord
+from discord import embeds
 import matplotlib.pyplot as plt
 from datetime import datetime
 from pytz import timezone
@@ -10,6 +12,14 @@ from discord.ext import commands
 from PIL import Image, ImageDraw, ImageFont, ImageChops
 from io import BytesIO
 import requests
+
+def Timer():
+	fmt = "%H:%M:%S"
+	# Current time in UTC
+	now_utc = datetime.now(timezone('UTC'))
+	now_berlin = now_utc.astimezone(timezone('Europe/berlin'))
+	actual_time = now_berlin.strftime(fmt)
+	return actual_time
 
 def statServer(guild):
 	status = {}
@@ -55,14 +65,14 @@ class Info(commands.Cog, name="info", command_attrs=dict(hidden=False)):
 
 		embed.set_image(url='attachment://stat.png')
 
-		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " + str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.display_avatar.url)
+		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " + Timer(), icon_url=ctx.message.author.display_avatar.url)
 
 		await ctx.send(file=discord.File(fp=image_binary, filename='stat.png'), embed=embed)
   
-	@commands.command(name="infos", aliases=["i"])
+	@commands.command(name="informations", aliases=["i", 'infos'])
 	async def infos(self, ctx):
 		"""Affiche les informations sur le Bot"""
-     
+	 
 		collabs = ['78691006', '71769515']
 
 		url0 = 'https://avatars.githubusercontent.com/u/' + collabs[0] + '?v=4/img'
@@ -105,9 +115,19 @@ class Info(commands.Cog, name="info", command_attrs=dict(hidden=False)):
 
 		embed.set_image(url="attachment://final_card.png")
 
-		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " + str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.display_avatar.url)
+		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " + Timer(), icon_url=ctx.message.author.display_avatar.url)
 
 		await ctx.send(file=file, embed=embed)
+
+	@commands.command(name='numbersofservers', aliases=['nbs'])
+	async def servers(self, ctx):
+		embed = discord.Embed(title='Name of all servers', description=f"Name of all servers where {self.bot.user.name} is", colour=discord.Colour(0x4F2B10))
+
+		embed.add_field(name='List', value='\n'.join(guild.name for guild in self.bot.guilds))
+
+		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " + Timer(), icon_url=ctx.message.author.display_avatar.url)
+  
+		await ctx.send(embed=embed)
 
 def setup(bot):
 	bot.add_cog(Info(bot))

@@ -1,14 +1,24 @@
 import time
 import asyncio
 import discord
-
+from discord.embeds import Embed
+from views import link
 from discord.ext import commands
 from datetime import datetime, timedelta
+from pytz import timezone
 from views import help as vhelp
 
 from PIL import Image, ImageDraw, ImageFont, ImageChops
 from io import BytesIO
 import requests
+
+def Timer():
+	fmt = "%H:%M:%S"
+	# Current time in UTC
+	now_utc = datetime.now(timezone('UTC'))
+	now_berlin = now_utc.astimezone(timezone('Europe/berlin'))
+	actual_time = now_berlin.strftime(fmt)
+	return actual_time
 
 class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 	"""Description des commandes de base"""
@@ -83,16 +93,33 @@ class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 	@commands.command(name='server', aliases=['serv', 's'])
 	async def server(self, ctx):
 		"""Donne des informations sur le serveur"""
+		
+		server_icon = ctx.guild.icon
 		embed = discord.Embed(title="Donne des informations sur le serveur", color=0x12F932, description="Ce serveur s'appelle "+str(ctx.message.guild.name) +
 							  " et totalise "+str(ctx.message.guild.member_count)+" membres et son créateur est <@!" + str(ctx.message.guild.owner_id)+">.", colour=discord.Colour(0x12F932))
 
 		embed.set_thumbnail(
-			url="https://steemitimages.com/DQmbQ9tUdvP98ruzMX6gCjXWz6N5yMBHbn7oJ1WeiiQoj68/16361360.png")
+			url=server_icon)
 
 		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " +
-						 str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.display_avatar.url)
+						 Timer(), icon_url=ctx.message.author.display_avatar.url)
 
 		await ctx.send(embed=embed)
+
+	@commands.command(name='invitation', aliases=['inv', 'invit'])
+	async def invitation(self, ctx):
+		"""Comment inviter LavaL Bot"""
+
+		view = link.View(label=f"Cliquez ici pour ajouter {self.bot.user.name}", url="https://discord.com/api/oauth2/authorize?client_id=829279577267896382&permissions=8&scope=bot")
+
+		embed = discord.Embed(title = "Invitation", color = 0x12F932, description=f"Comment inviter {self.bot.user.name}", colour=discord.Colour(0x12F932))
+
+		embed.add_field(name="Ajoutes moi sur ton serveur en cliquant ici :", value="__[Invitation](https://discord.com/api/oauth2/authorize?client_id=829279577267896382&permissions=8&scope=bot)__")
+  
+		embed.set_thumbnail(
+			url="https://steemitimages.com/DQmbQ9tUdvP98ruzMX6gCjXWz6N5yMBHbn7oJ1WeiiQoj68/16361360.png")
+
+		await ctx.send(embed=embed, view=view)
 
 	@commands.command(name='alliasinfos', aliases=['all', 'allias'])
 	async def alliasinfos(self, ctx, *input):
@@ -138,7 +165,7 @@ class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 
 		embed.title, embed.description, embed.color = title, remind + description, color
 		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " +
-						 str(time.strftime('%H:%M:%S')), icon_url=ctx.message.author.display_avatar.url)
+						 Timer(), icon_url=ctx.message.author.display_avatar.url)
 		await ctx.send(embed=embed)
 
 	@commands.command(name='collaborators', aliases=['clb'])

@@ -9,6 +9,8 @@ import youtube_dl
 from async_timeout import timeout
 from discord.ext import commands
 
+amis = [252446669239615488, 468464666629111829]
+
 # Silence useless bug reports messages
 youtube_dl.utils.bug_reports_message = lambda: ''
 
@@ -316,6 +318,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 
 	@commands.command(name='leave', aliases=['disconnect', 'deco'])
 	@commands.has_permissions(manage_guild=True)
+	@commands.check(amis)
 	async def _leave(self, ctx: commands.Context):
 		"""Efface la file d'attente et quitte le canal vocal."""
 
