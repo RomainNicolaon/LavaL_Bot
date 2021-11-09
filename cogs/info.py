@@ -121,9 +121,10 @@ class Info(commands.Cog, name="info", command_attrs=dict(hidden=False)):
 
 	@commands.command(name='numbersofservers', aliases=['nbs'])
 	async def servers(self, ctx):
-		embed = discord.Embed(title='Name of all servers', description=f"Name of all servers where {self.bot.user.name} is", colour=discord.Colour(0x4F2B10))
+		number_servers = str(len(self.bot.guilds))
+		embed = discord.Embed(title=f"Nom de tout les servers où {self.bot.user.name} est", description=f"Actuellment {self.bot.user.name} est sur " + number_servers + " serveurs", colour=discord.Colour(0xFA8072))
 
-		embed.add_field(name='List', value='\n'.join(guild.name for guild in self.bot.guilds))
+		embed.add_field(name="Liste des serveurs :", value='\n'.join(guild.name for guild in self.bot.guilds))
 
 		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " + Timer(), icon_url=ctx.message.author.display_avatar.url)
   

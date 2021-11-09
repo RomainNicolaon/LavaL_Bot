@@ -2,8 +2,8 @@ from os import name
 import time
 from datetime import datetime
 from pytz import timezone
-
-from matplotlib.pyplot import text
+from time import strptime
+from matplotlib.pyplot import text, title
 import discord
 import random
 
@@ -112,6 +112,17 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " +
 						 Timer(), icon_url=ctx.message.author.display_avatar.url)
 
+		await ctx.send(embed=embed)
+
+	@commands.command(name='lookup', aliases=['lu'])
+	async def lookup(self, ctx, member: Member = None):
+		"""Affiche des information sur un compte Discord"""
+		if not member:
+			member = ctx.author
+		creation_date = member.created_at.strftime("%A %-d %B %Y at %H:%M:%S")
+		embed = discord.Embed(title=f"Affiche des information sur le compte de {member.name}#{member.discriminator}")
+		embed.add_field(name="ID", value=member.id, inline=True)
+		embed.add_field(name="Créé depuis le :", value=str(creation_date), inline=True)
 		await ctx.send(embed=embed)
 
 	@commands.command(name='actual_game', aliases=['ag'])
