@@ -5,11 +5,10 @@ import math
 import random
 
 import discord
+from discord.ext.commands.core import has_role
 import youtube_dl
 from async_timeout import timeout
 from discord.ext import commands
-
-amis = [252446669239615488, 468464666629111829]
 
 # Silence useless bug reports messages
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -315,10 +314,14 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 			return
 
 		ctx.voice_state.voice = await destination.connect()
+  
+	def is_in_guild(guild_id):
+		async def predicate(ctx):
+			return ctx.guild and ctx.guild.id == guild_id
+		return commands.check(predicate)
 
 	@commands.command(name='leave', aliases=['disconnect', 'deco'])
-	@commands.has_permissions(manage_guild=True)
-	@commands.check(amis)
+	@commands.has_permissions(manage_guild=True) or commands.has_any_role(907589778734718976, 'DJ', 'admin', 'Admins', 'Moderators')
 	async def _leave(self, ctx: commands.Context):
 		"""Efface la file d'attente et quitte le canal vocal."""
 
@@ -327,6 +330,8 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 
 		await ctx.voice_state.stop()
 		del self.voice_states[ctx.guild.id]
+
+		await ctx.message.add_reaction(self.bot.get_emoji(844992841938894849))
 
 	@commands.command(name='volume')
 	async def _volume(self, ctx: commands.Context, *, volume: int):

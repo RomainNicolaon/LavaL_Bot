@@ -110,15 +110,17 @@ class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 	async def invitation(self, ctx):
 		"""Comment inviter LavaL Bot"""
 
-		view = link.View(label=f"Cliquez ici pour ajouter {self.bot.user.name}", url="https://discord.com/api/oauth2/authorize?client_id=829279577267896382&permissions=8&scope=bot")
+		view = link.View(label=f"Cliquez ici pour ajouter {self.bot.user.name}", url="https://discord.com/api/oauth2/authorize?client_id=808008104628322334&permissions=8&scope=bot")
 
 		embed = discord.Embed(title = "Invitation", color = 0x12F932, description=f"Comment inviter {self.bot.user.name}", colour=discord.Colour(0x12F932))
 
-		embed.add_field(name="Ajoutes moi sur ton serveur en cliquant ici :", value="__[Invitation](https://discord.com/api/oauth2/authorize?client_id=829279577267896382&permissions=8&scope=bot)__")
+		embed.add_field(name="Ajoutes moi sur ton serveur en cliquant ici :", value="__[Invitation](https://discord.com/api/oauth2/authorize?client_id=808008104628322334&permissions=8&scope=bot)__")
   
 		embed.set_thumbnail(
-			url="https://steemitimages.com/DQmbQ9tUdvP98ruzMX6gCjXWz6N5yMBHbn7oJ1WeiiQoj68/16361360.png")
+			url=self.bot.user.display_avatar.url)
 
+		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " +
+						 Timer(), icon_url=ctx.message.author.display_avatar.url)
 		await ctx.send(embed=embed, view=view)
 
 	@commands.command(name='alliasinfos', aliases=['all', 'allias'])

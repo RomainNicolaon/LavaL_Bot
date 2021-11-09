@@ -1,2 +1,7 @@
 
 auth/token.dat
+auth/token.dat
+.DS_Store
+*.dat
+auth/token.dat
+__pycache__/bot.cpython-39.pyc

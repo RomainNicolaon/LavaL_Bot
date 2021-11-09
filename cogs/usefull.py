@@ -17,14 +17,14 @@ class Usefull(commands.Cog, name="usefull", command_attrs=dict(hidden=False)):
 	@commands.command(name='strawpoll', aliases=['straw', 'stp', 'sond', 'sondage'], pass_context=True)
 	async def strawpool(self, ctx, *, context):
 		"""Posez un sondage, et ajoutez 2 réactions pour voter avec votre communauté."""
-		crossmark, checkmark = self.bot.get_emoji(842800737221607474), self.bot.get_emoji(842800730049871892)
+		crossmark, checkmark = self.bot.get_emoji(844992804480352257), self.bot.get_emoji(844992841938894849)
 		await ctx.message.delete()
 		message = await ctx.send("__*" + ctx.message.author.mention + "*__ : " + context)
 		await message.add_reaction(emoji=checkmark)
 		await message.add_reaction(emoji=crossmark)
 
 	@commands.command(name='profilepicture', aliases=['pp'])
-	async def strawpool(self, ctx, member : discord.Member = None):
+	async def profilepicture(self, ctx, member : discord.Member = None):
 		"""Affiche la photo de profil du membre sélectionné."""
 		author = member if member else ctx.message.author
 		await ctx.send(author.display_avatar.url)
