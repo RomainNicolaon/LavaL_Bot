@@ -3,9 +3,7 @@ import functools
 import itertools
 import math
 import random
-
 import discord
-from discord.ext.commands.core import has_role
 import youtube_dl
 from async_timeout import timeout
 from discord.ext import commands
@@ -321,30 +319,35 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 		return commands.check(predicate)
 
 	@commands.command(name='leave', aliases=['disconnect', 'deco'])
-	@commands.has_permissions(manage_guild=True) or commands.has_any_role(907589778734718976, 'DJ', 'admin', 'Admins', 'Moderators')
 	async def _leave(self, ctx: commands.Context):
 		"""Efface la file d'attente et quitte le canal vocal."""
 
-		if not ctx.voice_state.voice:
-			return await ctx.send('Non connecté à un canal vocal.')
+		role_names = [role.name for role in ctx.author.roles]
+		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
 
-		await ctx.voice_state.stop()
-		del self.voice_states[ctx.guild.id]
+			if not ctx.voice_state.voice:
+				return await ctx.send('Non connecté à un canal vocal.')
 
-		await ctx.message.add_reaction(self.bot.get_emoji(844992841938894849))
+			await ctx.voice_state.stop()
+			del self.voice_states[ctx.guild.id]
+
+			await ctx.message.add_reaction(self.bot.get_emoji(844992841938894849))
 
 	@commands.command(name='volume')
 	async def _volume(self, ctx: commands.Context, *, volume: int):
 		"""Règle le volume du lecteur."""
+  
+		role_names = [role.name for role in ctx.author.roles]
+		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
+      
+			if not ctx.voice_state.is_playing:
+				return await ctx.send('Rien n\'est joué pour le moment.')
 
-		if not ctx.voice_state.is_playing:
-			return await ctx.send('Rien n\'est joué pour le moment.')
+			if 0 > volume > 100:
+				return await ctx.send('Le volume doit être compris entre 0 et 100%')
 
-		if 0 > volume > 100:
-			return await ctx.send('Le volume doit être compris entre 0 et 100%')
-
-		ctx.voice_state.volume = volume / 100
-		await ctx.send('Volume du lecteur réglé sur {}%'.format(volume))
+			ctx.voice_state.volume = volume / 100
+			await ctx.send('Volume du lecteur réglé sur {}%'.format(volume))
 
 	@commands.command(name='now', aliases=['current', 'playing'])
 	async def _now(self, ctx: commands.Context):
@@ -352,34 +355,18 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 
 		await ctx.send(embed=ctx.voice_state.current.create_embed())
 
-	@commands.command(name='pause')
-	@commands.has_permissions(manage_guild=True)
-	async def _pause(self, ctx: commands.Context):
-		"""Met en pause le morceau en cours de lecture."""
-
-		if not ctx.voice_state.is_playing and ctx.voice_state.voice.is_playing():
-			ctx.voice_state.voice.pause()
-			await ctx.message.add_reaction('⏯')
-
-	@commands.command(name='resume')
-	@commands.has_permissions(manage_guild=True)
-	async def _resume(self, ctx: commands.Context):
-		"""Reprend un morceau actuellement en pause."""
-
-		if not ctx.voice_state.is_playing and ctx.voice_state.voice.is_paused():
-			ctx.voice_state.voice.resume()
-			await ctx.message.add_reaction('⏯')
-
 	@commands.command(name='stop')
-	@commands.has_permissions(manage_guild=True)
 	async def _stop(self, ctx: commands.Context):
 		"""Arrête la lecture de la chanson et efface la file d'attente."""
+  
+		role_names = [role.name for role in ctx.author.roles]
+		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
 
-		ctx.voice_state.songs.clear()
+			ctx.voice_state.songs.clear()
 
-		if not ctx.voice_state.is_playing:
-			ctx.voice_state.voice.stop()
-			await ctx.message.add_reaction('⏹')
+			if not ctx.voice_state.is_playing:
+				ctx.voice_state.voice.stop()
+				await ctx.message.add_reaction('⏹')
 
 	@commands.command(name='skip')
 	async def _skip(self, ctx: commands.Context):
@@ -443,21 +430,27 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 	async def _shuffle(self, ctx: commands.Context):
 		"""Mélange la file d'attente."""
 
-		if len(ctx.voice_state.songs) == 0:
-			return await ctx.send('File d\'attente vide.')
+		role_names = [role.name for role in ctx.author.roles]
+		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
 
-		ctx.voice_state.songs.shuffle()
-		await ctx.message.add_reaction('✅')
+			if len(ctx.voice_state.songs) == 0:
+				return await ctx.send('File d\'attente vide.')
+
+			ctx.voice_state.songs.shuffle()
+			await ctx.message.add_reaction('✅')
 
 	@commands.command(name='remove')
 	async def _remove(self, ctx: commands.Context, index: int):
 		"""Supprime un morceau de la file d'attente à un numéro donné."""
+  
+		role_names = [role.name for role in ctx.author.roles]
+		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
 
-		if len(ctx.voice_state.songs) == 0:
-			return await ctx.send('File d\'attente vide.')
+			if len(ctx.voice_state.songs) == 0:
+				return await ctx.send('File d\'attente vide.')
 
-		ctx.voice_state.songs.remove(index - 1)
-		await ctx.message.add_reaction('✅')
+			ctx.voice_state.songs.remove(index - 1)
+			await ctx.message.add_reaction('✅')
 
 	@commands.command(name='loop')
 	async def _loop(self, ctx: commands.Context):
@@ -472,13 +465,23 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 		
 	@commands.command(name='pause')
 	async def _pause(self, ctx):
-		ctx.voice_client.pause()
-		await ctx.send("En pause ⏸️")
+		"""Met en pause la chanson en cours"""
+
+		role_names = [role.name for role in ctx.author.roles]
+		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
+      
+			ctx.voice_client.pause()
+			await ctx.send("En pause ⏸️")
 
 	@commands.command(name='resume')
 	async def _resume(self, ctx):
-		ctx.voice_client.resume()
-		await ctx.send("Reprise ⏯️")
+		"""Reprends la chanson en cours"""
+
+		role_names = [role.name for role in ctx.author.roles]
+		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
+		
+			ctx.voice_client.resume()
+			await ctx.send("Reprise ⏯️")
 
 	@commands.command(name='play', aliases=['p'])
 	async def _play(self, ctx: commands.Context, *, search: str):

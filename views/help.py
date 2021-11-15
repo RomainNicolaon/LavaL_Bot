@@ -49,7 +49,7 @@ class View(discord.ui.View):
 
 	def add_buttons(self):
 		self.startB = Buttons(label="<<", style=discord.ButtonStyle.grey, command=self.set_page, args=0, ctx = self.ctx)
-		self.backB = Buttons(label="Retour", style=discord.ButtonStyle.blurple, command=self.to_page, args=-1, ctx = self.ctx)
+		self.backB = Buttons(label="Précédent", style=discord.ButtonStyle.blurple, command=self.to_page, args=-1, ctx = self.ctx)
 		self.nextB = Buttons(label="Suivant", style=discord.ButtonStyle.blurple, command=self.to_page, args=+1, ctx = self.ctx)
 		self.endB = Buttons(label=">>", style=discord.ButtonStyle.grey, command=self.set_page, args=len(self.options)-1, ctx = self.ctx)
 		self.quitB = Buttons(label="Quitter", style=discord.ButtonStyle.red, command=self.quit, ctx = self.ctx)
