@@ -23,21 +23,35 @@ class Joinserv(commands.Cog, name="joinserv", command_attrs=dict(hidden=False)):
 	@commands.Cog.listener()
 	async def on_member_join(self, member):
 		guild = member.guild
-		if guild.system_channel is not None:
-			embed = discord.Embed(color=0x4a3d9a)
-			embed.add_field(name="Bienvenue", value=f"**<@!{member.id}>** vient de rejoindre **{member.guild.name}**", inline=False)
-			embed.set_thumbnail(url="https://media.tenor.com/images/d139e96072bae377be522258f7128881/tenor.gif")
-			await guild.system_channel.send(embed=embed)
+		if guild.id == 441962473583804416:
+			if guild.system_channel is not None:
+				embed = discord.Embed(color=0x4a3d9a)
+				embed.add_field(name="Bienvenue", value=f"**<@!{member.id}>** vient de rejoindre **{member.guild.name}**", inline=False)
+				embed.set_thumbnail(url="https://c.tenor.com/PhhN-3LjE3AAAAAd/gatto-cibo.gif")
+				await guild.system_channel.send(embed=embed)
+		else:
+			if guild.system_channel is not None:
+				embed = discord.Embed(color=0x4a3d9a)
+				embed.add_field(name="Bienvenue", value=f"**<@!{member.id}>** vient de rejoindre **{member.guild.name}**", inline=False)
+				embed.set_thumbnail(url="https://media.tenor.com/images/d139e96072bae377be522258f7128881/tenor.gif")
+				await guild.system_channel.send(embed=embed)
 
 	
 	@commands.Cog.listener()
 	async def on_member_remove(self, member):
 		guild = member.guild
-		if guild.system_channel is not None:
-			embed = discord.Embed(color=0x4a3d9a)
-			embed.add_field(name="Au revoir", value=f"**<@!{member.id}>** vient de quitter **{member.guild.name}**", inline=False)
-			embed.set_thumbnail(url="https://i.pinimg.com/originals/2d/02/44/2d024443d7e18982443275923492ec5e.gif")
-			await guild.system_channel.send(embed=embed)
+		if guild.id == 441962473583804416:
+			if guild.system_channel is not None:
+				embed = discord.Embed(color=0x4a3d9a)
+				embed.add_field(name="Au revoir", value=f"**<@!{member.id}>** vient de quitter **{member.guild.name}**", inline=False)
+				embed.set_thumbnail(url="https://c.tenor.com/PhhN-3LjE3AAAAAd/gatto-cibo.gif")
+				await guild.system_channel.send(embed=embed)
+		else:
+			if guild.system_channel is not None:
+				embed = discord.Embed(color=0x4a3d9a)
+				embed.add_field(name="Au revoir", value=f"**<@!{member.id}>** vient de quitter **{member.guild.name}**", inline=False)
+				embed.set_thumbnail(url="https://i.pinimg.com/originals/2d/02/44/2d024443d7e18982443275923492ec5e.gif")
+				await guild.system_channel.send(embed=embed)
 	
 	@commands.command(name='pic')
 	async def picture(self, ctx, user: discord.Member = None):

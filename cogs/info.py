@@ -121,8 +121,9 @@ class Info(commands.Cog, name="info", command_attrs=dict(hidden=False)):
 
 	@commands.command(name='numbersofservers', aliases=['nbs'])
 	async def servers(self, ctx):
+		"""Affiche la liste ainsi que le nombre de serveurs où LavaL Bot est"""
 		number_servers = str(len(self.bot.guilds))
-		embed = discord.Embed(title=f"Nom de tout les servers où {self.bot.user.name} est", description=f"Actuellment {self.bot.user.name} est sur " + number_servers + " serveurs", colour=discord.Colour(0xFA8072))
+		embed = discord.Embed(title=f"Nom de tout les servers où {self.bot.user.name} est", description=f"Actuellement {self.bot.user.name} est sur **" + number_servers + "** serveurs", colour=discord.Colour(0xFA8072))
 
 		embed.add_field(name="Liste des serveurs :", value='\n'.join(guild.name for guild in self.bot.guilds))
 
