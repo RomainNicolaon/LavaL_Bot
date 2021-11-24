@@ -1,13 +1,8 @@
 import discord
-from discord import file
-from discord import message
-from discord import channel
-
 from discord.ext import commands
 
-from PIL import Image, ImageDraw, ImageFont, ImageChops
+from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
-
 
 class Joinserv(commands.Cog, name="joinserv", command_attrs=dict(hidden=False)):
 	"""Description des commandes bienvenue"""
@@ -52,6 +47,12 @@ class Joinserv(commands.Cog, name="joinserv", command_attrs=dict(hidden=False)):
 				embed.add_field(name="Au revoir", value=f"**<@!{member.id}>** vient de quitter **{member.guild.name}**", inline=False)
 				embed.set_thumbnail(url="https://i.pinimg.com/originals/2d/02/44/2d024443d7e18982443275923492ec5e.gif")
 				await guild.system_channel.send(embed=embed)
+	
+	@commands.Cog.listener()
+	async def on_guild_join(self, guild):
+		if guild.system_channel is not None:
+			embed = discord.Embed(title="LavaL Bot - Un bot utile créé par LavaL#9240", description="Merci de m'avoir ajouté à ton serveur !\n\nPour commencer, utilises la commande `?help` pour accerder aux commandes disponibles.\nTu peux aussi retrouver le code source sur le lien suivant : [Github](https://github.com/LavaL18/LavaL_Bot)", color=0x12F932)
+			await guild.system_channel.send(embed=embed)
 	
 	@commands.command(name='pic')
 	async def picture(self, ctx, user: discord.Member = None):
