@@ -27,7 +27,7 @@ class Minigame(commands.Cog, name="minigame", command_attrs=dict(hidden=False)):
 	def help_custom(self):
 		emoji = '🎮'
 		label = "Mini-jeux"
-		description = "Commandes des mini-jeux, comme le TicTacToe (le Morpion en français)"
+		description = "Commandes des mini-jeux"
 		return emoji, label, description
 
 	@commands.command(name='tictactoe', aliases=['ttt'])

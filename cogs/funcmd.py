@@ -47,6 +47,9 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 
 	@commands.command(name='hug')
 	async def hug(self, ctx, member: Member = None):
+		"""Fais un calin à quelqu'un ou à toi même"""
+		if not member:
+			member = ctx.author
 		gif_hug = random.choice([
 			"https://cdn.zerotwo.dev/HUG/9300c260-931c-4572-9a11-9a0f1f54735d.gif", "https://media.giphy.com/media/fvN5KrNcKKUyX7hNIA/giphy.gif",
 			"https://media.giphy.com/media/kooPUWvhaGe7C/giphy.gif",
@@ -65,6 +68,9 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 
 	@commands.command(name='kiss')
 	async def kiss(self, ctx, member: Member = None):
+		"""Fais un bisous à quelqu'un ou à toi même"""
+		if not member:
+			member = ctx.author
 		gif_kiss = random.choice([
 			"https://cdn.zerotwo.dev/KISS/1afe24ba-5014-4ddd-9222-5969076e9de3.gif",
 			"https://cdn.zerotwo.dev/KISS/1a43ff80-a5ca-4e78-929b-09714a51b557.gif",
@@ -83,6 +89,9 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 
 	@commands.command(name='punch')
 	async def punch(self, ctx, member: Member = None):
+		"""Met un coup de poing à quelqu'un ou à toi même"""
+		if not member:
+			member = ctx.author
 		gif_punch = random.choice([
 			"https://media.giphy.com/media/Z5zuypybI5dYc/giphy.gif",
 			"https://media.discordyui.net/reactions/slap/6784568.gif",
@@ -129,18 +138,21 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 
 	@commands.command(name='actual_game', aliases=['ag'])
 	async def actual_game(self, ctx, member: Member = None):
+		"""`EN DEVELOPPEMENT` Affiche l'activité de quelqu'un ou de soi même"""
 		if not member:
 			member = ctx.author
 		timerofplay = member.activity.start
-		# print('ddzdff', str(timer))
+		print(timerofplay)
 		
-		embed = discord.Embed(title=f"Affiche l'activité de {member.name}#{member.discriminator}", description=f"**__Joue à__** :{member.activity.name}", color=0x0000)
+		embed = discord.Embed(title=f"Affiche l'activité de {member.name}#{member.discriminator}", description="", color=0x0000)
+
+		embed.add_field(name='__Joue à__ : ', value=member.activity.name, inline=False)
 		
-		embed.add_field(name='**__Détails__** : ', value=member.activity.details, inline=False)
+		embed.add_field(name='__Détails__ : ', value=member.activity.details, inline=False)
 		
-		embed.add_field(name='**__Détails__** : ', value=member.activity.state, inline=False)
+		embed.add_field(name='__Sous détails__ : ', value=member.activity.state, inline=False)
 		
-		embed.add_field(name='**__Depuis__** : ', value=member.activity.start, inline=False)
+		embed.add_field(name='__Depuis__ : ', value=member.activity.start.strftime("%H:%M:%S"), inline=False)
 		
 		embed.set_thumbnail(url=member.activity.large_image_url)
 		
@@ -152,10 +164,12 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 
 	@commands.command(name='time')
 	async def time(self, ctx):
+		"""Affiche l'heure actuelle en France"""
 		await ctx.reply(Timer())
 
 	@commands.command(name='rickroll', aliases=["rr"])
 	async def rickroll(self, ctx, member: Member = None):
+		"""Troll quelqu'un ou toi même avec un rickroll"""
 		lyrics = ["Never gonna give you up",
 					"Never gonna let you down",
 					"Never gonna run around and desert you",

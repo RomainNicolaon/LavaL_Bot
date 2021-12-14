@@ -301,7 +301,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 	@commands.command(name='summon')
 	@commands.has_permissions(manage_guild=True)
 	async def _summon(self, ctx: commands.Context, *, channel: discord.VoiceChannel = None):
-		"""Invoque le bot sur un canal vocal. Si aucun canal n'a été spécifié, il rejoint votre canal.."""
+		"""Invoque le bot sur un canal vocal. Si aucun canal n'a été spécifié, il rejoint votre canal."""
 
 		if not channel and not ctx.author.voice:
 			raise VoiceError('Vous n\'êtes ni connecté à un canal vocal ni n\'avez spécifié un canal à rejoindre.')
@@ -454,7 +454,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 
 	@commands.command(name='loop')
 	async def _loop(self, ctx: commands.Context):
-		"""Met en boucle le morceau en cours de lecture. Fait cette commande une nouvelle fois pour annuler la boucle de la chanson."""
+		"""Met en boucle le morceau en cours de lecture. Fais cette commande une nouvelle fois pour annuler la boucle de la chanson."""
 
 		if not ctx.voice_state.is_playing:
 			return await ctx.send('Rien n\'est joué en ce moment.')
@@ -504,7 +504,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 				song = Song(source)
 
 				await ctx.voice_state.songs.put(song)
-				await ctx.send('Mis en file d\'attente {}'.format(str(source)))
+				await ctx.send('Prochaine musique : {}'.format(str(source)))
 
 	@_join.before_invoke
 	@_play.before_invoke

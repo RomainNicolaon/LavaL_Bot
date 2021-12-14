@@ -10,6 +10,8 @@ import os
 from discord.ext import commands
 from importlib import reload
 
+from discord.ext.commands import bot
+
 class Admin(commands.Cog, name="admin", command_attrs=dict(hidden=True)):
 	"""Admin description"""
 	def __init__(self, bot):
@@ -125,6 +127,19 @@ class Admin(commands.Cog, name="admin", command_attrs=dict(hidden=True)):
 	async def clear(self, ctx, amount=10):
 		"""Supprime 10 message"""
 		await ctx.channel.purge(limit=amount)
+
+	@commands.command(name="ads")
+	@commands.is_owner()
+	async def ads(self, guild, ctx):
+		my_channel = self.get_channel(840003378062557202)
+		annonce_channel = 'moderator-only'
+		if annonce_channel is not None:
+			await annonce_channel.send(ctx)
+			await my_channel.send("L'annonce a bien été envoyé")
+		else:
+			if guild.system_channel is not None:
+				await annonce_channel.send(ctx)
+				await my_channel.id.send("L'annonce a bien été envoyée")
 
 def setup(bot):
 	bot.add_cog(Admin(bot))

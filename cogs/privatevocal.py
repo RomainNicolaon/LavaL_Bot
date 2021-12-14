@@ -4,7 +4,7 @@ import discord
 from discord.ext import commands
 
 class PrivateVocal(commands.Cog, name="privatevocal", command_attrs=dict(hidden=True)):
-	"""Create a voice channel when all are taken, initial channel : 'General'"""
+	"""(Automatique) \nCréer un canal vocal lorsque tous sont occupés, nom du canal : 'Général'"""
 	def __init__(self, bot):
 		self.bot = bot
 		self.task_if_connected = self.bot.loop.create_task(self.loop_if_connected())
@@ -12,7 +12,7 @@ class PrivateVocal(commands.Cog, name="privatevocal", command_attrs=dict(hidden=
 	def help_custom(self):
 		emoji = '💭'
 		label = "Vocal"
-		description = "Auto vocal channels."
+		description = "Canal vocal automatiques."
 		return emoji, label, description
 
 	def return_loop_task(self):
