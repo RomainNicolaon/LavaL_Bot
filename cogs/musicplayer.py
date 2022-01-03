@@ -284,8 +284,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 	async def cog_before_invoke(self, ctx: commands.Context):
 		ctx.voice_state = self.get_voice_state(ctx)
 
-	async def cog_command_error(self, ctx: commands.Context, error: commands.CommandError):
-		await ctx.send('Une erreur s\'est produite: {}'.format(str(error)))
+	
 
 	@commands.command(name='join', invoke_without_subcommand=True)
 	async def _join(self, ctx: commands.Context):
