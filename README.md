@@ -1,7 +1,7 @@
 ![GitHub is maintained](https://img.shields.io/maintenance/yes/2022?color=success)
-![GitHub last commit](https://img.shields.io/github/last-commit/LavaL18/LavaL_Bot)
+![GitHub last commit](https://img.shields.io/github/last-commit/RomainNicolaon/LavaL_Bot)
 ![](https://img.shields.io/pypi/pyversions/discord.py.svg)
-![GitHub last release](https://img.shields.io/github/v/release/LavaL18/LavaL_Bot?color=blueviolet)
+![GitHub last release](https://img.shields.io/github/v/release/RomainNicolaon/LavaL_Bot?color=blueviolet)
 
 ## LavaL_Bot 
 *(forked from [Algobot](https://github.com/PaulMarisOUMary/Algosup-Discord))*
@@ -46,10 +46,10 @@ $ python3 -m pip install -U .[voice]
 
 ## Contributors
 
-[![contributors](https://contrib.rocks/image?repo=LavaL18/LavaL_Bot)](https://github.com/LavaL18/LavaL_Bot/graphs/contributors)
+[![contributors](https://contrib.rocks/image?repo=RomainNicolaon/LavaL_Bot)](https://github.com/RomainNicolaon/LavaL_Bot/graphs/contributors)
 
 
 ## Authors
 
-1. [@LavaL_18](https://github.com/LavaL_19) Creator of [LavaL Bot](https://github.com/LavaL18/LavaL_Bot)
+1. [@LavaL_18](https://github.com/RomainNicolaon) Creator of [LavaL Bot](https://github.com/RomainNicolaon/LavaL_Bot)
 2. [@Paul Maris](https://github.com/PaulMarisOUMary) LavaL Bot is a fork of [Algosup-Discord](https://github.com/PaulMarisOUMary/Algosup-Discord)'s template
