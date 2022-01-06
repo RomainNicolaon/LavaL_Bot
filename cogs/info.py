@@ -124,7 +124,12 @@ class Info(commands.Cog, name="info", command_attrs=dict(hidden=False)):
 	async def servers(self, ctx):
 		"""Affiche la liste ainsi que le nombre de serveurs où LavaL Bot est"""
 		number_servers = str(len(self.bot.guilds))
+		int_number_servers = int(len(self.bot.guilds))
+		percent = int_number_servers*100/75
+		percent = round(percent, 1)
 		embed = discord.Embed(title=f"Nom de tout les servers où {self.bot.user.name} est", description=f"Actuellement {self.bot.user.name} est sur **" + number_servers + "** serveurs", colour=discord.Colour(0xFA8072))
+
+		embed.add_field(name="But à atteindre : 75 serveurs", value=number_servers + '/75 serveurs soit ≃ ' + str(percent) +'% atteint', inline=False)
 
 		embed.add_field(name="Liste des serveurs :", value='\n'.join(guild.name for guild in self.bot.guilds))
 
