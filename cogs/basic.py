@@ -1,15 +1,15 @@
 import time
 import asyncio
 import discord
-from discord.embeds import Embed
+import os
+import glob
 from views import link
 from discord.ext import commands
 from datetime import datetime, timedelta
 from pytz import timezone
 from views import help as vhelp
 
-from PIL import Image, ImageDraw, ImageFont, ImageChops
-from io import BytesIO
+from PIL import Image, ImageDraw, ImageFont
 import requests
 
 def Timer():
@@ -19,6 +19,16 @@ def Timer():
 	now_berlin = now_utc.astimezone(timezone('Europe/berlin'))
 	actual_time = now_berlin.strftime(fmt)
 	return actual_time
+
+def CountLines():
+	path = 'cogs/'
+	variable = []
+	for filename in glob.glob(os.path.join(path, '*.py')):
+		with open(os.path.join(os.getcwd(), filename), 'r') as files:
+			nonempty_lines = [line.strip("\n") for line in files if line != "\n"]
+		line_count = len(nonempty_lines)
+		variable.append(line_count)
+	return variable
 
 class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 	"""Description des commandes de base"""
@@ -34,12 +44,16 @@ class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 	@commands.command(name='help', aliases=['?', 'h', 'commands'])
 	async def help(self, ctx, *input):
 		"""Affiche le menu d'aide"""
+		if ctx.guild.id in self.bot.prefixes:
+			guild_prefix = self.bot.prefixes[ctx.guild.id]
+		else:
+			guild_prefix = self.bot.bot_data['bot_default_prefix']
 		if not input:
 			allowed = 3
 			close_in = round(datetime.timestamp(datetime.now() + timedelta(minutes=allowed)))
-			embed = discord.Embed(color=discord.Color.dark_grey(), title = "👋 Aide · Acceuil", description = "`Bienvenue sur le menu d'aide.`\n\nUtilise la commande `?help` pour avoir plus d'informations sur une commande.\nUtilise la catégorie `help` pour avoir plus d'informations sur une catégorie.\nUtilise le menu déroulant ci-dessous pour sélectionner une catégorie.\n\u200b", url='https://github.com/LavaL18/LavaL_Bot')
+			embed = discord.Embed(color=discord.Color.dark_grey(), title = "👋 Aide · Acceuil", description = "`Bienvenue sur le menu d'aide.`\n\n**Le préfix de ce serveur est **: `"+ str(guild_prefix)+"`\n\nUtilise la commande `?help` pour avoir plus d'informations sur une commande.\nUtilise la catégorie `help` pour avoir plus d'informations sur une catégorie.\nUtilise le menu déroulant ci-dessous pour sélectionner une catégorie.\n\u200b", url='https://github.com/RomainNicolaon/LavaL_Bot')
 			embed.add_field(name="Temps restant avant la fin de la commande :", value="Cette session d'aide se terminera <t:"+str(close_in)+":R>.\nUtilise la commande `help` pour ouvrir une nouvelle cession d'aide.\n\u200b", inline=False)
-			embed.add_field(name="Qui suis-je ?", value="Je suis un bot créé par <@!405414058775412746>; en collaboration avec <@!265148938091233293>. Créé pour le fun en 2021, je suis désormais un Bot avec le but d'être utilisé partout donc n'hésite pas à m'ajouter sur ton serveur xD.\nJ'ai beaucoup de fonctionnalités comme un lecteur de musique, un gestionnaire d'événements, des utilitaires, et plus encore.\n\nJe suis open source, vous pouvez voir mon code sur [Github](https://github.com/LavaL18/LavaL_Bot) !")
+			embed.add_field(name="Qui suis-je ?", value="Je suis un bot créé par <@!405414058775412746>; en collaboration avec <@!265148938091233293>. Créé pour le fun en 2021, je suis désormais un Bot avec le but d'être utilisé partout donc n'hésite pas à m'ajouter sur ton serveur xD.\nJ'ai beaucoup de fonctionnalités comme un lecteur de musique, un gestionnaire d'événements, des utilitaires, et plus encore.\n\nJe suis open source, vous pouvez voir mon code sur [Github](https://github.com/RomainNicolaon/LavaL_Bot) !\n\n `Total de lignes de code : "+ str(sum(CountLines()))+"`")
 
 			view = vhelp.View(bot=self.bot, ctx=ctx, homeembed=embed, ui=2)
 			message = await ctx.send(embed=embed, view=view)
@@ -60,7 +74,7 @@ class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 			if search_cog:
 				if "help_custom" in dir(search_cog):
 					emoji, label, description = search_cog.help_custom()
-					embed = discord.Embed(title = str(emoji)+" Aide · "+str(label),description='`'+str(search_cog.__doc__)+'`', url='https://github.com/LavaL18/LavaL_Bot')
+					embed = discord.Embed(title = str(emoji)+" Aide · "+str(label),description='`'+str(search_cog.__doc__)+'`', url='https://github.com/RomainNicolaon/LavaL_Bot')
 					for command in search_cog.get_commands():
 						params = ""
 						for param in command.clean_params: params += " <"+str(param)+">"
@@ -69,7 +83,7 @@ class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 				cog = search_command.cog
 				if "help_custom" in dir(cog):
 					emoji, label, description = cog.help_custom()
-					embed = discord.Embed(title = str(emoji)+" Aide · "+str(label)+" : "+str(search_command.name), description="**Commande** : "+str(search_command.name)+"\n"+str(search_command.help), url='https://github.com/LavaL18/LavaL_Bot')
+					embed = discord.Embed(title = str(emoji)+" Aide · "+str(label)+" : "+str(search_command.name), description="**Commande** : "+str(search_command.name)+"\n"+str(search_command.help), url='https://github.com/RomainNicolaon/LavaL_Bot')
 				params = ""
 				for param in search_command.clean_params: params += " <"+str(param)+">"
 				embed.add_field(name="Utilisation", value=str(search_command.name)+str(params), inline=False)

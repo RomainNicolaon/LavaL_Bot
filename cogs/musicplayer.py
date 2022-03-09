@@ -505,6 +505,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 				await ctx.voice_state.songs.put(song)
 				await ctx.send('Prochaine musique : {}'.format(str(source)))
 
+
 	@_join.before_invoke
 	@_play.before_invoke
 	async def ensure_voice_state(self, ctx: commands.Context):

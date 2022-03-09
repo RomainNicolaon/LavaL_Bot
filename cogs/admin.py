@@ -84,6 +84,27 @@ class Admin(commands.Cog, name="admin", command_attrs=dict(hidden=True)):
 		else:
 			await ctx.send(':metal: '+cog+' reloaded ! : __`' + str(victim) + ' task killed`__')
 
+	@commands.command(name="reloadlatest", aliases=["rl"])
+	@commands.is_owner()
+	async def reload_latest(self, ctx):
+		"""Reload the latest edited cog."""
+		base_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+		cogs_directory = os.path.join(base_directory, "cogs")
+		latest_cog = (None, 0)
+		for file in os.listdir(cogs_directory):
+			actual = os.path.splitext(file)
+			if actual[1] == ".py":
+				file_path = os.path.join(cogs_directory, file)
+				latest_edit = os.path.getmtime(file_path)
+				if latest_edit > latest_cog[1]: latest_cog = (actual[0], latest_edit)
+
+		try:
+			victims = await self.reload_cogs([f"cogs.{latest_cog[0]}"])
+		except commands.ExtensionError as e:
+			await ctx.send(f"{e.__class__.__name__}: {e}")
+		else:
+			await ctx.send(f"🤘 {latest_cog[0]} reloaded ! | ☠️ __`{len(victims)} task killed`__ | 🔄 __`view(s) reloaded`__")
+
 	@commands.command(name='reloadviews', aliases=['rmod', 'rview', 'rviews'])
 	@commands.is_owner()
 	async def reload_view(self, ctx):
@@ -140,6 +161,22 @@ class Admin(commands.Cog, name="admin", command_attrs=dict(hidden=True)):
 			if guild.system_channel is not None:
 				await annonce_channel.send(ctx)
 				await my_channel.id.send("L'annonce a bien été envoyée")
+
+	@commands.command(name="changeprefix", aliases=["cp"])
+	@commands.has_guild_permissions()
+	async def change_guild_prefix(self, ctx, new_prefix):
+		"""Change the guild prefix."""
+		try:
+			exist = await self.bot.database.exist(self.bot.database_data["prefix"]["table"], "*", f"guild_id={ctx.guild.id}")
+			if exist:
+				await self.bot.database.update(self.bot.database_data["prefix"]["table"], "guild_prefix", new_prefix, f"guild_id={ctx.guild.id}")
+			else:
+				await self.bot.database.insert(self.bot.database_data["prefix"]["table"], {"guild_id": ctx.guild.id, "guild_prefix": new_prefix})
+
+			self.bot.prefixes[ctx.guild.id] = new_prefix
+			await ctx.send(f":warning: Le préfix a bien été changé pour `{new_prefix}`")
+		except Exception as e:
+			await ctx.send(f"Erreur : {e}")
 
 def setup(bot):
 	bot.add_cog(Admin(bot))

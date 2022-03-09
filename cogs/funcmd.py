@@ -1,14 +1,11 @@
-from os import name
-import time
-from datetime import datetime
+from datetime import datetime, date
+from unicodedata import name
 from pytz import timezone
-from time import strptime
-from matplotlib.pyplot import text, title
 import discord
 import random
-
 from discord.ext import commands
 from discord import Member
+import aiohttp
 
 def Timer():
 	fmt = "%H:%M:%S"
@@ -138,13 +135,11 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 
 	@commands.command(name='actual_game', aliases=['ag'])
 	async def actual_game(self, ctx, member: Member = None):
-		"""`EN DEVELOPPEMENT` Affiche l'activité de quelqu'un ou de soi même"""
+		"""Affiche l'activité de quelqu'un ou de soi même"""
 		if not member:
 			member = ctx.author
-		timerofplay = member.activity.start
-		print(timerofplay)
 		
-		embed = discord.Embed(title=f"Affiche l'activité de {member.name}#{member.discriminator}", description="", color=0x0000)
+		embed = discord.Embed(title=f"Affiche l'activité de {member.name}#{member.discriminator}", description="", color=discord.Colour.yellow())
 
 		embed.add_field(name='__Joue à__ : ', value=member.activity.name, inline=False)
 		
@@ -159,7 +154,10 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " +
 						 Timer(), icon_url=ctx.message.author.display_avatar.url)
 
-		await ctx.send(embed=embed)
+		if not member.activity.start:
+			raise commands.CommandError("Tu n'as pas d'activité pour le moment, essaye en jouant à un jeu par exemple")
+		else:
+			await ctx.send(embed=embed)
 
 
 	@commands.command(name='time')
@@ -167,7 +165,7 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 		"""Affiche l'heure actuelle en France"""
 		await ctx.reply(Timer())
 
-	@commands.command(name='rickroll', aliases=["rr"])
+	@commands.command(name='rickroll', aliases=['rr'])
 	async def rickroll(self, ctx, member: Member = None):
 		"""Troll quelqu'un ou toi même avec un rickroll"""
 		lyrics = ["Never gonna give you up",
@@ -177,7 +175,174 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 		embed = discord.Embed(title=f'{random.choice(lyrics)}', description=f"{ctx.author.name} rickroled {member.name}#{member.discriminator}", color=0x00ff00)
 		embed.set_image(url="https://c.tenor.com/Z6gmDPeM6dgAAAAC/dance-moves.gif")
 		await ctx.send(embed=embed)
-		
 
+	@commands.command(name='', aliases=['eval'])
+	async def waifurate(self, ctx, *waifu: commands.Greedy[discord.Member]):
+		"""
+		Évalue la/les personnes(s) mentionnée(s).
+		En utilisant les alias `husbandorate` ou `spousurate`, cela changera la façon dont LavaL Bot s'adresse aux personnes évaluées.
+		Cela peut permettre à plusieurs personnes d'être évaluées en même temps :eyes :
+		Exemple :
+			?waifurate @user#9999
+		Cette commande est dédiée à Hannah, qui a eu l'idée de cette commande. J'espère qu'elle est en train de faire évaluer ses waifus en paix.
+		"""
+
+		waifu_text = "waifu"
+
+		if not waifu:
+			return await ctx.send("Vous n'avez mentionné personne que je puisse noter.")
+		elif len(waifu) >= 20:
+			return await ctx.send("Je pense que tu as trop de {} :pensée : Je ne vais même pas essayer de noter ça (gros weeb).".format(waifu_text))
+
+		rating = random.randrange(1, 11)
+		if rating <= 2:
+			emoji = ":sob:"
+		elif rating <= 4:
+			emoji = ":disappointed:"
+		elif rating <= 6:
+			emoji = ":thinking:"
+		elif rating <= 8:
+			emoji = ":blush:"
+		elif rating == 9:
+			emoji = ":kissing_heart:"
+		else:
+			emoji = ":heart_eyes:"
+
+		waifu_list = []
+		for x, w in enumerate(waifu):
+			if w.name not in waifu_list:
+				waifu_list.append(w.name)
+
+		if len(waifu_list) > 1:
+			if len(waifu_list) == 2:
+				oxford_comma = " and {}"
+			else:
+				oxford_comma = ", and {}"
+
+			waifus = ", ".join(waifu_list[:-1]).strip(", ") + oxford_comma.format(waifu_list[-1])
+			return await ctx.send("Oh poly {0} rating? :smirk: Your combined {0} rating for {3} is {1}/10. {2}".format(waifu_text, rating, emoji, waifus))
+		else:
+			return await ctx.send("Oh that's your {}? I rate {} a {}/10. {}".format(waifu_text, waifu[0].name, rating, emoji))
+
+	@commands.command(name='searchimage', aliases=['si'])
+	async def searchimage(ctx, file_name):
+		search_result = 'Search Results:'
+		from os import listdir
+		for file in listdir('data'):
+			if file_name in file.lower():
+				search_result = search_result+'\n'+file
+		if search_result == 'Search Results:':
+			await ctx.send('Error: Not matched with any file.')
+		else:
+			await ctx.send(search_result)
+
+	@commands.command(name='anilist', aliases=['anl'])
+	async def anime(self, ctx, *, animeName: str):
+		""""Recherche un anime sur AniList.co et renvoie les informations de base"""
+
+		api = 'https://graphql.anilist.co'
+		query = '''
+		query ($name: String){
+		  Media(search: $name, type: ANIME) {
+			id
+			idMal
+			description
+			title {
+			  romaji
+			  english
+			}
+			coverImage {
+			  large
+			}
+			startDate {
+			  year
+			  month
+			  day
+			}
+			endDate {
+			  year
+			  month
+			  day
+			}
+			synonyms
+			format
+			status
+			episodes
+			duration
+			nextAiringEpisode {
+			  episode
+			}
+			averageScore
+			meanScore
+			source
+			genres
+			tags {
+			  name
+			}
+			studios(isMain: true) {
+			  nodes {
+				name
+			  }
+			}
+			siteUrl
+		  }
+		}
+		'''
+		variables = {
+			'name': animeName
+		}
+
+		async with aiohttp.ClientSession() as session:
+			async with session.post(api, json={'query': query, 'variables': variables}) as r:
+				if r.status == 200:
+					json = await r.json()
+					data = json['data']['Media']
+
+					embed = discord.Embed(color=ctx.author.top_role.colour)
+					embed.set_footer(text='API fourni par AniList.co | ID: {}'.format(str(data['id'])))
+					embed.set_thumbnail(url=data['coverImage']['large'])
+					if data['title']['english'] == None or data['title']['english'] == data['title']['romaji']:
+						embed.add_field(name='Titre', value=data['title']['romaji'], inline=False)
+					else:
+						embed.add_field(name='Titre', value='{} ({})'.format(data['title']['english'], data['title']['romaji']), inline=False)
+
+					embed.add_field(name='Description', value=data['description'].replace("<br>", ''), inline=False)
+
+					embed.add_field(name='Type', value=data['format'].replace('_', ' ').title().replace('Tv', 'TV'), inline=True)
+					if data['episodes'] > 1:
+						embed.add_field(name="Nombre d'épisodes", value='{} ep de {} min'.format(data['episodes'], data['duration']), inline=True)
+					else:
+						embed.add_field(name='Durée', value=str(data['duration']) + ' min', inline=True)
+
+					embed.add_field(name='Status', value=data['status'].replace('_', ' ').title(), inline=True)
+
+					embed.add_field(name='Date de début', value='{}.{}.{}'.format(data['startDate']['day'], data['startDate']['month'], data['startDate']['year']), inline=True)
+					if data['endDate']['day'] == None:
+						embed.add_field(name='Épisodes diffusés', value=data['nextAiringEpisode']['episode'] - 1, inline=True)
+					elif data['episodes'] > 1:
+						embed.add_field(name='Date de fin', value='{}.{}.{}'.format(data['endDate']['day'], data['endDate']['month'], data['endDate']['year']), inline=True)
+
+					try:
+						embed.add_field(name='Studio principal', value=data['studios']['nodes'][0]['name'], inline=True)
+					except IndexError:
+						pass
+					embed.add_field(name='Score (%)', value=data['averageScore'], inline=True)
+					embed.add_field(name='Genres', value=', '.join(data['genres']), inline=False)
+					tags = ''
+					for tag in data['tags']:
+						tags += tag['name'] + ', '
+					embed.add_field(name='Tags', value=tags[:-2], inline=False)
+					try:
+						embed.add_field(name='Adapté de', value=data['source'].replace('_', ' ').title(), inline=True)
+					except AttributeError:
+						pass
+
+					embed.add_field(name='Lien AniList', value=data['siteUrl'], inline=False)
+					embed.add_field(name='Lien MyAnimeList', value='https://myanimelist.net/anime/' + str(data['idMal']), inline=False)
+					await ctx.send(embed=embed)
+
+				else:
+					await ctx.send(":x: Je n'ai pas trouvé d'anime correspondant !")
+		
 def setup(bot):
 	bot.add_cog(Funcmd(bot))
