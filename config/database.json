@@ -1,0 +1,18 @@
+{
+    "server": {
+        "host": "127.0.0.1",
+        "port": 3306,
+        "user": "user",
+        "password": "*********",
+        "database": "laval_bot"
+    },
+    "birthday": {
+        "table": "table_birthday",
+
+        "guild_id": 551753752781127680,
+        "channel_id": 840003378062557202
+    },
+    "prefix": {
+        "table": "table_prefix"
+    }
+}
