@@ -14,5 +14,8 @@
     },
     "prefix": {
         "table": "table_prefix"
+    },
+    "welcome": {
+        "table": "table_welcome"
     }
 }
