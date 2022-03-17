@@ -28,6 +28,10 @@ async def initBot() -> None:
 	bot.prefixes = dict()
 	for data in await bot.database.select(database_data["prefix"]["table"], "*"): bot.prefixes[data[0]] = data[1]
 
+	# welcomes loader
+	bot.welcomes = dict()
+	for data in await bot.database.select(database_data["welcome"]["table"], "*"): bot.welcomes[data[0]] = data[1]
+
 	# Cogs loader
 	cogs_directory = os.path.join(base_directory, "cogs")
 	for cog in os.listdir(cogs_directory):
@@ -35,7 +39,7 @@ async def initBot() -> None:
 		if actual[1] == '.py': bot.load_extension('cogs.'+actual[0])
 
 if __name__ == '__main__':
-	#If you're not using any database replace the "command_prefix" with : commands.when_mentioned_or(bot_data["bot_default_prefix"])
+	#Si vous n'utilisez pas de base de données, remplacez "command_prefix" (ligne 39) par : "commands.when_mentioned_or(bot_data["bot_default_prefix"])"
 	bot = commands.Bot(command_prefix=get_prefix, description=bot_data["bot_description"], case_insensitive=True, intents=discord.Intents.all(), help_command=None)
 	bot.loop.create_task(initBot())
 

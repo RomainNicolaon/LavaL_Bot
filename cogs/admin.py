@@ -165,7 +165,7 @@ class Admin(commands.Cog, name="admin", command_attrs=dict(hidden=True)):
 	@commands.command(name="changeprefix", aliases=["cp"])
 	@commands.has_guild_permissions()
 	async def change_guild_prefix(self, ctx, new_prefix):
-		"""Change the guild prefix."""
+		"""Change le prefixe du serveur."""
 		try:
 			exist = await self.bot.database.exist(self.bot.database_data["prefix"]["table"], "*", f"guild_id={ctx.guild.id}")
 			if exist:
@@ -175,6 +175,22 @@ class Admin(commands.Cog, name="admin", command_attrs=dict(hidden=True)):
 
 			self.bot.prefixes[ctx.guild.id] = new_prefix
 			await ctx.send(f":warning: Le préfix a bien été changé pour `{new_prefix}`")
+		except Exception as e:
+			await ctx.send(f"Erreur : {e}")
+
+	@commands.command(name="setwelcome", aliases=["sw"])
+	@commands.has_guild_permissions()
+	async def active_welcome(self, ctx, is_active):
+		"""Active/désactive l'envoie de messages bienvenue / au revoir."""
+		try:
+			exist = await self.bot.database.exist(self.bot.database_data["welcome"]["table"], "*", f"guild_id={ctx.guild.id}")
+			if exist:
+				await self.bot.database.update(self.bot.database_data["welcome"]["table"], "is_active", is_active, f"guild_id={ctx.guild.id}")
+			else:
+				await self.bot.database.insert(self.bot.database_data["welcome"]["table"], {"guild_id": ctx.guild.id, "is_active": is_active})
+
+			self.bot.welcomes[ctx.guild.id] = is_active
+			await ctx.send(f":wave: Les messages de bienvenue / au revoir sont à l'état `{is_active}`\n\n:warning: `0` = **désactivé** `1` = **activé**")
 		except Exception as e:
 			await ctx.send(f"Erreur : {e}")
 

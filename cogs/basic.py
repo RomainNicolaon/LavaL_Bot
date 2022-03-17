@@ -3,11 +3,12 @@ import asyncio
 import discord
 import os
 import glob
-from views import link
+
 from discord.ext import commands
 from datetime import datetime, timedelta
 from pytz import timezone
 from views import help as vhelp
+from views import link
 
 from PIL import Image, ImageDraw, ImageFont
 import requests
@@ -51,7 +52,7 @@ class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 		if not input:
 			allowed = 3
 			close_in = round(datetime.timestamp(datetime.now() + timedelta(minutes=allowed)))
-			embed = discord.Embed(color=discord.Color.dark_grey(), title = "👋 Aide · Acceuil", description = "`Bienvenue sur le menu d'aide.`\n\n**Le préfix de ce serveur est **: `"+ str(guild_prefix)+"`\n\nUtilise la commande `?help` pour avoir plus d'informations sur une commande.\nUtilise la catégorie `help` pour avoir plus d'informations sur une catégorie.\nUtilise le menu déroulant ci-dessous pour sélectionner une catégorie.\n\u200b", url='https://github.com/RomainNicolaon/LavaL_Bot')
+			embed = discord.Embed(color=discord.Color.dark_grey(), title = "👋 Aide · Acceuil", description = "`Bienvenue sur le menu d'aide.`\n\n**Le préfix de ce serveur est **: `"+ str(guild_prefix)+"`\n\nUtilise la commande `"+ str(guild_prefix)+"help` pour avoir plus d'informations sur une commande.\nUtilise la catégorie `help` pour avoir plus d'informations sur une catégorie.\nUtilise le menu déroulant ci-dessous pour sélectionner une catégorie.\n\u200b", url='https://github.com/RomainNicolaon/LavaL_Bot')
 			embed.add_field(name="Temps restant avant la fin de la commande :", value="Cette session d'aide se terminera <t:"+str(close_in)+":R>.\nUtilise la commande `help` pour ouvrir une nouvelle cession d'aide.\n\u200b", inline=False)
 			embed.add_field(name="Qui suis-je ?", value="Je suis un bot créé par <@!405414058775412746>; en collaboration avec <@!265148938091233293>. Créé pour le fun en 2021, je suis désormais un Bot avec le but d'être utilisé partout donc n'hésite pas à m'ajouter sur ton serveur xD.\nJ'ai beaucoup de fonctionnalités comme un lecteur de musique, un gestionnaire d'événements, des utilitaires, et plus encore.\n\nJe suis open source, vous pouvez voir mon code sur [Github](https://github.com/RomainNicolaon/LavaL_Bot) !\n\n `Total de lignes de code : "+ str(sum(CountLines()))+"`")
 
