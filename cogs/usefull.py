@@ -23,12 +23,6 @@ class Usefull(commands.Cog, name="usefull", command_attrs=dict(hidden=False)):
 		await message.add_reaction(emoji=checkmark)
 		await message.add_reaction(emoji=crossmark)
 
-	@commands.command(name='profilepicture', aliases=['pp'])
-	async def profilepicture(self, ctx, member : discord.Member = None):
-		"""Affiche la photo de profil du membre sélectionné."""
-		author = member if member else ctx.message.author
-		await ctx.send(author.display_avatar.url)
-
 	@commands.command(name='emojilist', aliases=['ce', 'el'], pass_context=True)
 	async def getcustomemojis(self, ctx):
 		"""Renvoie une liste de tous les emojis cutom du serveur actuel."""

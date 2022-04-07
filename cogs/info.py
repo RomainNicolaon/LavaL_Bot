@@ -1,16 +1,13 @@
 import io
-import time
-from typing import List
 import discord
-from discord import embeds
 import matplotlib.pyplot as plt
 from datetime import datetime
 from pytz import timezone
+from io import BytesIO
 
 from discord.ext import commands
 
-from PIL import Image, ImageDraw, ImageFont, ImageChops
-from io import BytesIO
+from PIL import Image, ImageDraw, ImageFont
 import requests
 
 def Timer():
@@ -85,9 +82,6 @@ class Info(commands.Cog, name="info", command_attrs=dict(hidden=False)):
 		card0 = card0.resize((280,280))
 		card1 = card1.resize((280,280))
   
-		card0.save('img/Romain.png')
-		card1.save('img/Paul.png')
-  
 		card = Image.open('img/github.png')
   
 		card.paste(card0, (80,165))
@@ -103,12 +97,10 @@ class Info(commands.Cog, name="info", command_attrs=dict(hidden=False)):
   
 		draw.text((280,60), text, font=font, fill=(255,255,255,128))
   
-		card.save('img/final_card.png')
- 
-		final_card = discord.File('img/final_card.png')
-  
-
-		file = discord.File("img/final_card.png", filename="final_card.png")
+		with BytesIO() as img_bin:
+			card.save(img_bin, format="PNG")
+			img_bin.seek(0)
+			file = discord.File(img_bin, "final_card.png")
   
 		embed = discord.Embed(title="Donne des informations sur moi", color=0x4F2B10, description="Yo, je suis le bot de <@!405414058775412746>", colour=discord.Colour(0x4F2B10))
   
@@ -121,6 +113,7 @@ class Info(commands.Cog, name="info", command_attrs=dict(hidden=False)):
 		await ctx.send(file=file, embed=embed)
 
 	@commands.command(name='numbersofservers', aliases=['nbs'])
+	@commands.is_owner()
 	async def servers(self, ctx):
 		"""Affiche la liste ainsi que le nombre de serveurs où LavaL Bot est"""
 		number_servers = str(len(self.bot.guilds))

@@ -1,9 +1,9 @@
 {
     "server": {
-        "host": "127.0.0.1",
+        "host": "90.63.34.93",
         "port": 3306,
-        "user": "user",
-        "password": "*********",
+        "user": "root",
+        "password": "Rom20122002",
         "database": "laval_bot"
     },
     "birthday": {

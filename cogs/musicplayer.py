@@ -483,6 +483,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 			await ctx.send("Reprise ⏯️")
 
 	@commands.command(name='play', aliases=['p'])
+	@commands.cooldown(1, 15, commands.BucketType.user)
 	async def _play(self, ctx: commands.Context, *, search: str):
 		"""Joue une chanson.
 		S'il y a des chansons en attente, celle-ci sera mise en attente jusqu'à ce que les

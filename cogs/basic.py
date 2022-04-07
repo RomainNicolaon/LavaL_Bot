@@ -38,7 +38,7 @@ class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 
 	def help_custom(self):
 		emoji = '📙'
-		label = "Basic"
+		label = "Général"
 		description = "Commandes de base, comme help, ping, etc.."
 		return emoji, label, description
 
@@ -186,44 +186,15 @@ class Basic(commands.Cog, name="basic", command_attrs=dict(hidden=False)):
 						 Timer(), icon_url=ctx.message.author.display_avatar.url)
 		await ctx.send(embed=embed)
 
-	@commands.command(name='collaborators', aliases=['clb'])
-	async def collaborators(self, ctx, *input):
-		"""Affiche la liste des collaborateurs"""
-
-		collabs = ['78691006', '71769515']
-
-		url0 = 'https://avatars.githubusercontent.com/u/' + collabs[0] + '?v=4/img'
-		url1 = 'https://avatars.githubusercontent.com/u/' + collabs[1] + '?v=4/img'
-
-		card0 = Image.open(requests.get(url0, stream=True).raw)
-		card1 = Image.open(requests.get(url1, stream=True).raw)
-		
-		card0 = card0.resize((280,280))
-		card1 = card1.resize((280,280))
-  
-		card0.save('img/Romain.png')
-		card1.save('img/Paul.png')
-  
-		card = Image.open('img/github.png')
-  
-		card.paste(card0, (80,165))
-		card.paste(card1, (580,165))
-  
-  
-		####################################################################
-  
-		text = "Collaborators"
-  
-		draw = ImageDraw.Draw(card)
-		font = ImageFont.truetype("arial.ttf", 60)
-  
-		draw.text((280,60), text, font=font, fill=(255,255,255,128))
-  
-		card.save('img/final_card.png')
- 
-		final_card = discord.File('img/final_card.png')
-		
-		await ctx.send(file = final_card)
+	# @commands.command(name='test', aliases=['ts'])
+	# async def test(self, ctx, member: discord.Member = None):
+	# 	if not member:
+	# 		member = ctx.author
+	# 	s1 = datetime.now().strftime("%H:%M:%S")
+	# 	s2 = member.activity.start.strftime("%H:%M:%S")
+	# 	FMT = '%H:%M:%S'
+	# 	tdelta = datetime.strptime(s1, FMT) - datetime.strptime(s2, FMT)
+	# 	print(tdelta)
 
 
 def setup(bot):
