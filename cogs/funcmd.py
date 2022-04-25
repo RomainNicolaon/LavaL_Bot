@@ -13,6 +13,8 @@ import json
 from serpapi import GoogleSearch
 from riotwatcher import LolWatcher, ApiError
 
+lol_watcher = LolWatcher('RGAPI-36c98b83-b452-427e-bf19-10a2c4a4cb94')
+
 def Timer():
 	fmt = "%H:%M:%S"
 	# Current time in UTC
@@ -26,6 +28,7 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 
 	def __init__(self, bot):
 		self.bot = bot
+		self.lol_profile = self.bot.database_data["lolprofile"]
 
 	def help_custom(self):
 		emoji = '<a:CatGunner:876156284557221929>'
@@ -556,13 +559,36 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 		embed.set_image(url=url)
 		embed.add_field(name="API fournie par", value="[anime-api.hisoka17](https://anime-api.hisoka17.repl.co/)")
 		await ctx.send(embed=embed)
+
+	@commands.command(name='registerlol', aliases=['rlol'])
+	@commands.cooldown(1, 10, commands.BucketType.user)
+	async def registerlol(self, ctx, *, username:str=None):
+		"""Permet d'enregistrer ton profil League of Legends"""
+		my_region = 'euw1'
+  
+		if username:
+			try:
+				me = lol_watcher.summoner.by_name(my_region, username)
+				name = me['name']
+				# Insert
+				await self.bot.database.insert(self.lol_profile["table"], {"pseudo": ctx.author.name, "discord_id": ctx.author.id, "lol_account": name})
+				# Update
+				await self.bot.database.update(self.lol_profile["table"], "lol_account", name, "discord_id = "+str(ctx.author.id))
+				await ctx.send("<a:yes_animated:844992841938894849> Votre profil a bien été enregistré ! Votre nom de compte est maintenant : **"+name+"**")
+			except:
+				raise await ctx.send("<a:no_animated:844992804480352257> Je n'ai pas trouvé de profil League of Legends correspondant !")
+		else:
+			await ctx.send("<a:no_animated:844992804480352257> Vous devez préciser un nom de profil League of Legends !")
   
 	@commands.command(name='lolprofil', aliases=['lol'])
-	async def lolprofil(self, ctx, *, username:str):
+	@commands.cooldown(1, 5, commands.BucketType.user)
+	async def lolprofil(self, ctx, *, username:str=None):
 		"""Renvoie le profil de League of Legends"""
-		lol_watcher = LolWatcher('RGAPI-e2690840-0500-4689-bd01-379f84847eac')
+		response = await self.bot.database.lookup(self.lol_profile["table"], "lol_account", "discord_id", str(ctx.author.id))
 		my_region = 'euw1'
 
+		if not username:
+			username = response[0][0]
 		try:
 			me = lol_watcher.summoner.by_name(my_region, username)
 
@@ -586,8 +612,8 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 			embed.add_field(name="Niveau", value=summoner_lvl, inline=False)
 
 			try:
-				# Solo/Duo
 				for i in range(len(my_ranked_stats)):
+					# Solo/Duo
 					if my_ranked_stats[i]['queueType'] == 'RANKED_SOLO_5x5':
 						queueType0 = my_ranked_stats[i]['queueType']
 						tier0 = my_ranked_stats[i]['tier']
@@ -595,6 +621,7 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 						lp0 = my_ranked_stats[i]['leaguePoints']
 						wins0 = my_ranked_stats[i]['wins']
 						losses0 = my_ranked_stats[i]['losses']
+					# Flex
 					if my_ranked_stats[i]['queueType'] == 'RANKED_FLEX_SR':
 						queueType1 = my_ranked_stats[i]['queueType']
 						tier1 = my_ranked_stats[i]['tier']
@@ -617,7 +644,7 @@ class Funcmd(commands.Cog, name="funcmd", command_attrs=dict(hidden=False)):
 			except:
 				await ctx.send("<a:no_animated:844992804480352257> Vous n'avez pas fait de parties en ranked.")
 		except:
-			await ctx.send("<a:no_animated:844992804480352257> Vous n'avez pas de compte League of Legends.")
+			await ctx.send("<a:no_animated:844992804480352257> Je n'ai pas trouvé de compte League of Legends correspondant. Essayez d'enregistrer votre compte League of Legends en utilisant `?registerlol` ou `?rlol` et réessayez.")
 		
 def setup(bot):
 	bot.add_cog(Funcmd(bot))
