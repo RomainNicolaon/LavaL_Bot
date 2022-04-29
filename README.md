@@ -7,6 +7,11 @@
 *(forked from [Algobot](https://github.com/PaulMarisOUMary/Algosup-Discord))*
 
 ## Getting started
+You can add the bot [here](https://discord.com/oauth2/authorize?client_id=808008104628322334&permissions=8&scope=bot%20applications.commands)
+
+Or visit the Top.gg page of LavaL Bot
+
+[![Discord Bots](https://top.gg/api/widget/808008104628322334.svg)](https://top.gg/bot/808008104628322334)
 
 ### Prerequisites
 
