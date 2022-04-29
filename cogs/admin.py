@@ -1,198 +1,169 @@
-import os
-from re import S, purge
-import ssl
 import discord
-from discord import channel
-import types
-import sys
 import os
+
+from classes.utilities import load_config ,cogs_manager, reload_views, cogs_directory, root_directory
 
 from discord.ext import commands
-from importlib import reload
 
-from discord.ext.commands import bot
+class Admin(commands.Cog, name="admin"):
+	"""
+		Commandes administrateur.
 
-class Admin(commands.Cog, name="admin", command_attrs=dict(hidden=True)):
-	"""Admin description"""
-	def __init__(self, bot):
+		Require intents: 
+			- message_content
+		
+		Require bot permission:
+			- read_messages
+			- send_messages
+			- attach_files
+	"""
+	def __init__(self, bot: commands.Bot) -> None:
 		self.bot = bot
+		self.welcome = bot.config["database"]["welcome"]
+		self.prefix = bot.config["database"]["prefix"]
 
-	def help_custom(self):
+	def help_custom(self) -> tuple[str]:
 		emoji = '⚙️'
 		label = "Admin"
-		description = "Affiche la liste des commandes admin."
+		description = "Affiche la liste des commandes d'administrateur."
 		return emoji, label, description
 
-	async def reload_views(self):
-		modules, infants = [], []
-		for module in sys.modules.items():
-			if isinstance(module[1], types.ModuleType):
-				modules.append(module[1])
-
-		for module in modules:
-			try:
-				if os.path.basename(os.path.dirname(module.__file__)) == "views":
-					reload(module)
-					infants.append(module.__name__)
-			except: pass
-
-		return infants
-
-	async def reload_cogs(self, cogs):
-		victims = []
-		for cog in cogs:
-			norm_cog = self.bot.get_cog(cog[5:len(cog)])
-			if "return_loop_task" in dir(norm_cog): 
-				norm_cog.return_loop_task().cancel()
-				victims.append(cog)
-			self.bot.reload_extension(cog)
-		return victims
-
-	@commands.command(name='reloadall', aliases=['rell', 'relall'])
+	@commands.command(name="loadcog")
+	@commands.bot_has_permissions(send_messages=True)
 	@commands.is_owner()
-	async def reload_all_cogs(self, ctx):
-		victim, victim_list, botCogs, safeCogs = 0, [], self.bot.extensions, []
-		try:
-			for cog in botCogs:
-				safeCogs.append(cog)
-			for cog in safeCogs:
-				g_cog = self.bot.get_cog(cog[5:len(cog)])
-				if "return_loop_task" in dir(g_cog): 
-					g_cog.return_loop_task().cancel()
-					victim += 1
-					victim_list.append(cog)
-				self.bot.reload_extension(cog)
-		except commands.ExtensionError as e:
-			await ctx.send(f'{e.__class__.__name__}: {e}')
-		else:
-			succes_text = ':muscle:  All cogs reloaded ! | __`' + str(victim) + ' task killed`__ : '
-			for victims in victim_list:
-				succes_text += "`"+str(victims).replace('cogs.', '')+"` "
-			await ctx.send(succes_text)
+	async def load_cog(self, ctx: commands.Context, cog: str):
+		"""Load a cog."""
+		await cogs_manager(self.bot, "load", [f"cogs.{cog}"])
+		await ctx.send(f":point_right: Cog {cog} loaded!")
 
-	@commands.command(name='reload', aliases=['rel'], require_var_positional=True)
+	@commands.command(name="unloadcog")
+	@commands.bot_has_permissions(send_messages=True)
 	@commands.is_owner()
-	async def reload_cogs(self, ctx, cog):
-		victim, cog, g_cog = 0, 'cogs.'+cog, self.bot.get_cog(cog)
-		try:
-			if "return_loop_task" in dir(g_cog):
-				g_cog.return_loop_task().cancel()
-				victim += 1
-			self.bot.reload_extension(cog)
-		except commands.ExtensionError as e:
-			await ctx.send(f'{e.__class__.__name__}: {e}')
-		else:
-			await ctx.send(':metal: '+cog+' reloaded ! : __`' + str(victim) + ' task killed`__')
+	async def unload_cog(self, ctx: commands.Context, cog: str):
+		"""Unload a cog."""
+		await cogs_manager(self.bot, "unload", [f"cogs.{cog}"])
+		await ctx.send(f":point_left: Cog {cog} unloaded!")
+
+	@commands.command(name="reloadallcogs", aliases=["rell"])
+	@commands.bot_has_permissions(send_messages=True)
+	@commands.is_owner()
+	async def reload_all_cogs(self, ctx: commands.Context):
+		"""Reload all cogs."""
+		cogs = [cog for cog in self.bot.extensions]
+		await cogs_manager(self.bot, "reload", cogs)	
+
+		await ctx.send(f":muscle: All cogs reloaded: `{len(cogs)}`!")
+
+	@commands.command(name="reload", aliases=["rel"], require_var_positional=True)
+	@commands.bot_has_permissions(send_messages=True)
+	@commands.is_owner()
+	async def reload_cogs(self, ctx: commands.Context, *cogs: str):
+		"""Reload specific cogs."""
+		cogs = [f"cogs.{cog}" for cog in cogs]
+		await cogs_manager(self.bot, "reload", cogs)
+
+		await ctx.send(f":thumbsup: `{'` `'.join(cogs)}` reloaded!")
 
 	@commands.command(name="reloadlatest", aliases=["rl"])
+	@commands.bot_has_permissions(send_messages=True)
 	@commands.is_owner()
-	async def reload_latest(self, ctx):
-		"""Reload the latest edited cog."""
-		base_directory = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-		cogs_directory = os.path.join(base_directory, "cogs")
-		latest_cog = (None, 0)
+	async def reload_latest_cogs(self, ctx: commands.Context, n_cogs: int = 1):
+		"""Reload the latest edited n cogs."""
+		def sort_cogs(cogs_last_edit):
+			return sorted(cogs_last_edit, reverse = True, key = lambda x: x[1])
+		
+		cogs = []
 		for file in os.listdir(cogs_directory):
 			actual = os.path.splitext(file)
 			if actual[1] == ".py":
 				file_path = os.path.join(cogs_directory, file)
 				latest_edit = os.path.getmtime(file_path)
-				if latest_edit > latest_cog[1]: latest_cog = (actual[0], latest_edit)
+				cogs.append([actual[0], latest_edit])
 
-		try:
-			victims = await self.reload_cogs([f"cogs.{latest_cog[0]}"])
-		except commands.ExtensionError as e:
-			await ctx.send(f"{e.__class__.__name__}: {e}")
-		else:
-			await ctx.send(f"🤘 {latest_cog[0]} reloaded ! | ☠️ __`{len(victims)} task killed`__ | 🔄 __`view(s) reloaded`__")
+		sorted_cogs = sort_cogs(cogs)
+		cogs = [f"cogs.{cog[0]}" for cog in sorted_cogs[:n_cogs]]
+		await cogs_manager(self.bot, "reload", cogs)
 
-	@commands.command(name='reloadviews', aliases=['rmod', 'rview', 'rviews'])
+		await ctx.send(f":point_down: `{'` `'.join(cogs)}` reloaded!")
+		
+	@commands.command(name="reloadviews", aliases=["rv"])
+	@commands.bot_has_permissions(send_messages=True)
 	@commands.is_owner()
-	async def reload_view(self, ctx):
+	async def reload_view(self, ctx: commands.Context):
 		"""Reload each registered views."""
-		try:
-			infants = await self.reload_views()
-		except commands.ExtensionError as e:
-			await ctx.send(f'{e.__class__.__name__}: {e}')
+		infants = reload_views()
+		succes_text = f"👌 All views reloaded ! | 🔄 __`{sum(1 for _ in infants)} view(s) reloaded`__ : "
+		for infant in infants: 
+			succes_text += f"`{infant.replace('views.', '')}` "
+		await ctx.send(succes_text)
+
+	@commands.command(name="reloadconfig", aliases=["rc"])
+	@commands.bot_has_permissions(send_messages=True)
+	@commands.is_owner()
+	async def reload_config(self, ctx: commands.Context):
+		"""Reload each json config file."""
+		self.bot.config = load_config()
+		await ctx.send(f":handshake: `{len(self.bot.config)}` config file(s) reloaded!")
+
+	@commands.command(name="synctree", aliases=["st"])
+	@commands.bot_has_permissions(send_messages=True)
+	@commands.is_owner()
+	async def reload_tree(self, ctx: commands.Context, guild_id: str = None):
+		"""Sync application commands."""
+		if guild_id:
+			if guild_id == "guild":
+				guild_id = ctx.guild.id
+			sync_tree = await self.bot.tree.sync(guild=discord.Object(id=int(guild_id)))
 		else:
-			succes_text = '👌 All views reloaded ! | 🔄 __`'+str(len(infants))+' view(s) reloaded`__ : '
-			for infant in infants: succes_text += "`"+str(infant).replace('views.', '')+"` "
-			await ctx.send(succes_text)
+			sync_tree = await self.bot.tree.sync()
+		await ctx.send(f":pinched_fingers: `{len(sync_tree)}` synced!")
 
-	@commands.command(name='killloop', aliases=['kill'], require_var_positional=True)
+	@commands.command(name="botlogs", aliases=["bl"])
+	@commands.bot_has_permissions(send_messages=True, attach_files=True)
 	@commands.is_owner()
-	async def kill_loop(self, ctx, cog):
-		cogs = self.bot.get_cog(cog)
-		if "return_loop_task" in dir(cogs):
-			cogs.return_loop_task().cancel()
-			await ctx.send("Task successfully killed")
-		else : await ctx.send("Task not found..")
+	async def show_bot_logs(self, ctx: commands.Context):
+		"""Upload the bot logs"""
+		logs_file = os.path.join(root_directory, "discord.log")
 
-	@commands.command(name='deletechannel', aliases=['dc'], require_var_positional=True)
-	@commands.has_permissions(manage_messages=True)
-	async def delete_channel(self, ctx, channel_name):
-		channel = discord.utils.get(ctx.guild.channels, name=channel_name)
-		while channel:
-			await channel.delete()
-			channel = discord.utils.get(ctx.guild.channels, name=channel_name)
-		await ctx.send("Tout les channels appelés `"+str(channel_name)+"` ont bien été supprimés")
-  
-	@commands.command(name="deletemessage", aliases=['dm'])
-	@commands.is_owner()
-	async def delete_message(self, ctx, number: int):
-		messages = await ctx.channel.history(limit=number + 1).flatten()
-		for each_message in messages:
-			await each_message.delete()
+		await ctx.send(file=discord.File(fp=logs_file, filename="bot.log"))
 
-	@commands.command(name="clear")
-	@commands.is_owner()
-	async def clear(self, ctx, amount=10):
-		"""Supprime 10 message"""
-		await ctx.channel.purge(limit=amount)
-
-	@commands.command(name="ads")
-	@commands.is_owner()
-	async def ads(self, guild, ctx):
-		my_channel = self.get_channel(840003378062557202)
-		annonce_channel = 'moderator-only'
-		if annonce_channel is not None:
-			await annonce_channel.send(ctx)
-			await my_channel.send("L'annonce a bien été envoyé")
-		else:
-			if guild.system_channel is not None:
-				await annonce_channel.send(ctx)
-				await my_channel.id.send("L'annonce a bien été envoyée")
-
-	@commands.command(name="changeprefix", aliases=["cp"])
-	@commands.has_guild_permissions()
+	@commands.command(name="changeprefix", aliases=["cp"], require_var_positional=True)
+	@commands.bot_has_permissions(send_messages=True)
+	@commands.has_guild_permissions(administrator=True)
+	@commands.guild_only()
 	async def change_guild_prefix(self, ctx, new_prefix):
-		"""Change le prefixe du serveur."""
+		"""Change le préfix du serveur."""
 		try:
-			exist = await self.bot.database.exist(self.bot.database_data["prefix"]["table"], "*", f"guild_id={ctx.guild.id}")
+			table = self.bot.config["database"]["prefix"]["table"]
+			exist = await self.bot.database.exist(table, "*", f"guild_id={ctx.guild.id}")
 			if exist:
-				await self.bot.database.update(self.bot.database_data["prefix"]["table"], "guild_prefix", new_prefix, f"guild_id={ctx.guild.id}")
+				await self.bot.database.update(table, "guild_prefix", new_prefix, f"guild_id={ctx.guild.id}")
 			else:
-				await self.bot.database.insert(self.bot.database_data["prefix"]["table"], {"guild_id": ctx.guild.id, "guild_prefix": new_prefix})
+				await self.bot.database.insert(table, {"guild_id": ctx.guild.id, "guild_prefix": new_prefix})
 
 			self.bot.prefixes[ctx.guild.id] = new_prefix
-			await ctx.send(f":warning: Le préfix a bien été changé pour `{new_prefix}`")
+			await ctx.send(f":warning: Le préfix a bien été changé en `{new_prefix}`")
 		except Exception as e:
-			await ctx.send(f"Erreur : {e}")
-
+			await ctx.send(f"Erreur: {e}")
+  
 	@commands.command(name="setwelcome", aliases=["sw"])
-	@commands.has_guild_permissions()
-	async def active_welcome(self, ctx, is_active):
+	@commands.bot_has_permissions(send_messages=True)
+	@commands.has_guild_permissions(administrator=True)
+	@commands.guild_only()
+	async def setwelcome(self, ctx, is_active):
 		"""Active/désactive l'envoie de messages bienvenue / au revoir."""
 		try:
-			exist = await self.bot.database.exist(self.bot.database_data["welcome"]["table"], "*", f"guild_id={ctx.guild.id}")
+			exist = await self.bot.database.exist(self.welcome["table"], "*", f"guild_id={ctx.guild.id}")
 			if exist:
-				await self.bot.database.update(self.bot.database_data["welcome"]["table"], "is_active", is_active, f"guild_id={ctx.guild.id}")
+				await self.bot.database.update(self.welcome["table"], "is_active", is_active, f"guild_id={ctx.guild.id}")
 			else:
-				await self.bot.database.insert(self.bot.database_data["welcome"]["table"], {"guild_id": ctx.guild.id, "is_active": is_active})
+				await self.bot.database.insert(self.welcome["table"], {"guild_id": ctx.guild.id, "is_active": is_active})
 
-			self.bot.welcomes[ctx.guild.id] = is_active
+			self.welcome[ctx.guild.id] = is_active
 			await ctx.send(f":wave: Les messages de bienvenue / au revoir sont à l'état `{is_active}`\n\n:warning: `0` = **désactivé** `1` = **activé**")
 		except Exception as e:
 			await ctx.send(f"Erreur : {e}")
 
-def setup(bot):
-	bot.add_cog(Admin(bot))
+
+async def setup(bot):
+	await bot.add_cog(Admin(bot))

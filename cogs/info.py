@@ -1,77 +1,133 @@
 import io
 import time
-from typing import List
 import discord
-from discord import embeds
 import matplotlib.pyplot as plt
-from datetime import datetime
-from pytz import timezone
-
-from discord.ext import commands
-
-from PIL import Image, ImageDraw, ImageFont, ImageChops
 from io import BytesIO
+from datetime import datetime
+from discord.utils import get
+from discord.ext import commands
+from discord import app_commands
+from PIL import Image, ImageDraw, ImageFont
 import requests
+from views import link
 
-def Timer():
-	fmt = "%H:%M:%S"
-	# Current time in UTC
-	now_utc = datetime.now(timezone('UTC'))
-	now_berlin = now_utc.astimezone(timezone('Europe/berlin'))
-	actual_time = now_berlin.strftime(fmt)
-	return actual_time
-
-def statServer(guild):
+def statServer(guild) -> dict:
 	status = {}
-	must = ['members', 'bot', 'streaming', 'idle', 'dnd', 'online', 'offline', 'mobile']
+	must = ["members", "bot", "streaming", "idle", "dnd", "online", "offline", "mobile"]
 	for a in must:
 		status[a] = 0
 	for member in guild:
-		status['members'] += 1
+		status["members"] += 1
 		status[str(member.status)] += 1
-		if member.is_on_mobile(): status['mobile'] += 1
-		if member.bot: status['bot'] += 1
+		if member.is_on_mobile(): 
+			status["mobile"] += 1
+		if member.bot: 
+			status["bot"] += 1
 		if member.activity or member.activities: 
 			for activity in member.activities:
 				if activity.type == discord.ActivityType.streaming:
-					status['streaming'] += 1
+					status["streaming"] += 1
 
 	return status
 
-class Info(commands.Cog, name="info", command_attrs=dict(hidden=False)):
-	"""Description des commandes sur l'information"""
-	def __init__(self, bot):
+class Info(commands.Cog, name="info"):
+	"""
+		Informations et statistiques.
+	
+		Require intents: 
+			- members
+			- presences
+		
+		Require bot permission:
+			- use_external_emojis
+	"""
+	def __init__(self, bot: commands.Bot) -> None:
 		self.bot = bot
 
-	def help_custom(self):
-		emoji = '💬'
-		label = "Informations"
-		description = "Informations globales, comme les statistiques du serveur, les informations sur le Bot, etc"
+	def help_custom(self) -> tuple[str]:
+		emoji = '📊'
+		label = "Info"
+		description = "Commandes concernant les informations complémentaires telles que les statistiques."
 		return emoji, label, description
 
-	@commands.command(name='stat', aliases=['status','graph','gs','sg'])
-	async def help(self, ctx):
-		"""Stats du serveur"""
+	@app_commands.command(name="statistics", description="Afficher les statistiques sur le serveur.")
+	@app_commands.checks.cooldown(1, 15.0, key=lambda i: (i.guild_id, i.user.id))
+	@app_commands.checks.bot_has_permissions(use_external_emojis=True)
+	@app_commands.checks.has_permissions(use_slash_commands=True)
+	async def stat(self, interaction: discord.Interaction) -> None:
+		"""Show a graphic pie about the server's members.""" 
 		plt.clf()
-		ax, data, colors = plt.subplot(), statServer(ctx.guild.members), ["#747f8d","#f04747","#faa81a","#43b582"]
-		ax.pie([data['offline'], data['dnd'], data['idle'], data['online']], colors=colors, startangle=-40, wedgeprops=dict(width=0.5))
-		leg = ax.legend(['Offline','dnd','idle','Online'],frameon=False, loc='lower center', ncol=5)
+		ax, data, colors = plt.subplot(), statServer(interaction.guild.members), ["#747f8d","#f04747","#faa81a","#43b582"]
+		ax.pie([data["offline"], data["dnd"], data["idle"], data["online"]], colors=colors, startangle=-40, wedgeprops=dict(width=0.5))
+		leg = ax.legend(["Offline","dnd","idle","Online"],frameon=False, loc="lower center", ncol=5)
 		for color,text in zip(colors,leg.get_texts()):
 			text.set_color(color)
 		image_binary = io.BytesIO()
 		plt.savefig(image_binary, transparent=True)
 		image_binary.seek(0)
 		
-		embed = discord.Embed(title="Statistiques actuelles du serveur ({})".format(data['members']),description="<:white_circle:845307338252222474> : **`{}`** (Offline)\n<:sleeping:698246924058361898> : **`{}`** (AFK)\n<:red_circle:845307338252222474>: **`{}`** (Do not disturb)\n<:green_circle:845307287307943957> : **`{}`** (Online)\n<:purple_circle:845308223196102727> : **`{}`** (Streaming)\n<:mobile_phone:698257015578951750> : **`{}`** (On mobile)\n<:robot:698250069165473852> : **`{}`** (Bot)".format(data['offline'], data['idle'], data['dnd'], data['online'], data['streaming'], data['mobile'], data['bot']))
+		embed = discord.Embed(title=f"Statistiques actuelles du serveur ({data['members']})",description=f"<:offline:698246924138184836> : **`{data['offline']}`** (Offline)\n<:idle:698246924058361898> : **`{data['idle']}`** (AFK)\n<:dnd:698246924528254986> : **`{data['dnd']}`** (dnd)\n<:online:698246924465340497> : **`{data['online']}`** (Online)\n<:streaming:699381397898395688> : **`{data['streaming']}`** (Streaming)\n<:phone:948279755248111756> : **`{data['mobile']}`** (on mobile)\n<:isbot:698250069165473852> : **`{data['bot']}`** (Robot)")
+		embed.set_image(url="attachment://stat.png")
+		embed.set_footer(text=f"Demandé par : {interaction.user} at {time.strftime('%H:%M:%S')}", icon_url=interaction.user.display_avatar.url)
+		await interaction.response.send_message(file=discord.File(fp=image_binary, filename="stat.png"), embed=embed)
 
-		embed.set_image(url='attachment://stat.png')
-
-		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " + Timer(), icon_url=ctx.message.author.display_avatar.url)
-
-		await ctx.send(file=discord.File(fp=image_binary, filename='stat.png'), embed=embed)
+	@app_commands.command(name="avatar", description="Affichez l'avatar.")
+	@app_commands.describe(user="Affiche l'image de profil de l'utilisateur.")
+	@app_commands.checks.bot_has_permissions(embed_links=True)
+	async def avatar(self, interaction: discord.Interaction, user: discord.Member = None):
+		if not user:
+			user = interaction.user
   
-	@commands.command(name="informations", aliases=["i", 'infos'])
-	async def infos(self, ctx):
+		pfp = user.display_avatar.url
+		embed = discord.Embed(title=f"Affiche la photo de profile de {user.name}#{user.discriminator}", color=0x00000, description=f"[Avatar URL]({pfp})")
+
+		embed.set_image(url=pfp)
+
+		embed.set_footer(text=f"Demandé par : {str(interaction.user.name)} à {time.strftime('%H:%M:%S')}", icon_url=interaction.user.display_avatar.url)
+
+		await interaction.response.send_message(embed=embed)
+
+	@app_commands.command(name="banner", description="Display the banner.")
+	@app_commands.describe(user="Affiche la bannière de profil de l'utilisateur.")
+	@app_commands.checks.bot_has_permissions(embed_links=True)
+	@app_commands.checks.has_permissions(use_slash_commands=True)
+	async def banner(self, interaction: discord.Interaction, user: discord.Member = None):
+		if not user: 
+			user = interaction.user
+		user = await self.bot.fetch_user(user.id)
+
+		try:
+			embed = discord.Embed(title=f"Affiche la bannière de profile de {user.name}#{user.discriminator}", color=0x00000, description=f"[Banner URL]({user.banner.url})")
+
+			embed.set_image(url=user.banner.url)
+
+			embed.set_footer(text=f"Demandé par : {str(interaction.user.name)} à {time.strftime('%H:%M:%S')}", icon_url=interaction.user.display_avatar.url)
+
+			await interaction.response.send_message(embed=embed)
+		except:
+			await interaction.response.send_message("Hmm cet utilisateur n'a pas de bannière personalisée")
+
+	@app_commands.command(name="lookup", description="Affiche des informations sur un utilisateur Discord")
+	@app_commands.describe(user="L'utilisateur à afficher les informations.")
+	@app_commands.checks.bot_has_permissions(use_external_emojis=True)
+	@app_commands.checks.has_permissions(use_slash_commands=True)
+	async def lookup(self, interaction: discord.Interaction, user: discord.Member = None):
+		"""Affiche plus d'informations sur un utilisateur Discord"""
+		if not user: 
+			user = interaction.user
+
+		realuser: discord.Member = get(user.guild.members, id=user.id)
+  
+		pfp = user.display_avatar.url
+		embed = discord.Embed(title=f"Affiche des information sur le compte de {user.name}#{user.discriminator}")
+		embed.add_field(name="ID", value=user.id, inline=True)
+		embed.add_field(name="Créé depuis le :", value=f"<t:{round(datetime.timestamp(realuser.created_at))}:F>", inline=True)
+		embed.set_thumbnail(url=pfp)
+		await interaction.response.send_message(embed=embed)
+
+	@app_commands.command(name="informations", description="Affiche les informations sur le Bot")
+	@app_commands.checks.has_permissions(use_slash_commands=True)
+	async def infos(self, interaction: discord.Interaction):
 		"""Affiche les informations sur le Bot"""
 	 
 		collabs = ['78691006', '71769515']
@@ -85,9 +141,6 @@ class Info(commands.Cog, name="info", command_attrs=dict(hidden=False)):
 		card0 = card0.resize((280,280))
 		card1 = card1.resize((280,280))
   
-		card0.save('img/Romain.png')
-		card1.save('img/Paul.png')
-  
 		card = Image.open('img/github.png')
   
 		card.paste(card0, (80,165))
@@ -99,29 +152,28 @@ class Info(commands.Cog, name="info", command_attrs=dict(hidden=False)):
 		text = "Collaborateurs"
   
 		draw = ImageDraw.Draw(card)
-		font = ImageFont.truetype("arial.ttf", 60)
+		font = ImageFont.truetype("fonts/arial.ttf", 60)
   
 		draw.text((280,60), text, font=font, fill=(255,255,255,128))
   
-		card.save('img/final_card.png')
- 
-		final_card = discord.File('img/final_card.png')
-  
-
-		file = discord.File("img/final_card.png", filename="final_card.png")
+		with BytesIO() as img_bin:
+			card.save(img_bin, format="PNG")
+			img_bin.seek(0)
+			file = discord.File(img_bin, "final_card.png")
   
 		embed = discord.Embed(title="Donne des informations sur moi", color=0x4F2B10, description="Yo, je suis le bot de <@!405414058775412746>", colour=discord.Colour(0x4F2B10))
   
 		embed.add_field(name="Ajoutes moi sur ton serveur en cliquant ici :", value="__[Invitation](https://discord.com/api/oauth2/authorize?client_id=808008104628322334&permissions=8&scope=bot)__")
 
 		embed.set_image(url="attachment://final_card.png")
+  
+		embed.set_footer(text=f"Demandé par : {str(interaction.user.name)} à {time.strftime('%H:%M:%S')}", icon_url=interaction.user.display_avatar.url)
 
-		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " + Timer(), icon_url=ctx.message.author.display_avatar.url)
-
-		await ctx.send(file=file, embed=embed)
-
-	@commands.command(name='numbersofservers', aliases=['nbs'])
-	async def servers(self, ctx):
+		await interaction.response.send_message(file=file, embed=embed)
+  
+	@app_commands.command(name="numbersofservers", description="Affiche la liste serveurs où LavaL Bot est")
+	@app_commands.checks.has_permissions(use_slash_commands=True)
+	async def nbservers(self, interaction: discord.Interaction):
 		"""Affiche la liste ainsi que le nombre de serveurs où LavaL Bot est"""
 		number_servers = str(len(self.bot.guilds))
 		int_number_servers = int(len(self.bot.guilds))
@@ -131,11 +183,42 @@ class Info(commands.Cog, name="info", command_attrs=dict(hidden=False)):
 
 		embed.add_field(name="But à atteindre : 75 serveurs", value=number_servers + '/75 serveurs soit ≃ ' + str(percent) +'% atteint', inline=False)
 
-		embed.add_field(name="Liste des serveurs :", value='\n'.join(guild.name for guild in self.bot.guilds))
+		if interaction.user.id == 405414058775412746:
+			embed.add_field(name="Liste des serveurs :", value='\n'.join(guild.name for guild in self.bot.guilds))
+			embed.add_field(name="Users", value=len(self.bot.users))
 
-		embed.set_footer(text="Demandé par : "+str(ctx.message.author.name)+" à " + Timer(), icon_url=ctx.message.author.display_avatar.url)
+		embed.set_footer(text=f"Demandé par : {str(interaction.user.name)} à {time.strftime('%H:%M:%S')}", icon_url=interaction.user.display_avatar.url)
   
-		await ctx.send(embed=embed)
+		await interaction.response.send_message(embed=embed)
 
-def setup(bot):
-	bot.add_cog(Info(bot))
+	@app_commands.command(name="server", description="Donne des informations sur le serveur")
+	async def server(self, interaction: discord.Interaction):
+		"""Donne des informations sur le serveur"""
+		server_icon = interaction.guild.icon
+		embed = discord.Embed(title="Donne des informations sur le serveur", color=0x12F932, description="Ce serveur s'appelle "+str(interaction.guild.name) + " et totalise "+str(interaction.guild.member_count)+" membres et son créateur est <@!" + str(interaction.guild.owner_id)+">.", colour=discord.Colour(0x12F932))
+
+		embed.set_thumbnail(url=server_icon)
+
+		embed.set_footer(text=f"Demandé par : {str(interaction.user.name)} à {time.strftime('%H:%M:%S')}", icon_url=interaction.user.display_avatar.url)
+
+		await interaction.response.send_message(embed=embed)
+
+	@app_commands.command(name="invitation", description="Comment inviter LavaL Bot")
+	async def invitation(self, interaction: discord.Interaction):
+		"""Comment inviter LavaL Bot"""
+
+		view = link.View(label=f"Cliquez ici pour ajouter {self.bot.user.name}", url="https://discord.com/api/oauth2/authorize?client_id=808008104628322334&permissions=8&scope=bot")
+
+		embed = discord.Embed(title = "Invitation", color = 0x12F932, description=f"Comment inviter {self.bot.user.name}", colour=discord.Colour(0x12F932))
+
+		embed.add_field(name="Ajoutes moi sur ton serveur en cliquant ici :", value="__[Invitation](https://discord.com/api/oauth2/authorize?client_id=808008104628322334&permissions=8&scope=bot)__")
+  
+		embed.set_thumbnail(
+			url=self.bot.user.display_avatar.url)
+
+		embed.set_footer(text=f"Demandé par : {str(interaction.user.name)} à {time.strftime('%H:%M:%S')}", icon_url=interaction.user.display_avatar.url)
+
+		await interaction.response.send_message(embed=embed, view=view)
+
+async def setup(bot):
+	await bot.add_cog(Info(bot))

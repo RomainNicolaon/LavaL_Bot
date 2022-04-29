@@ -1,9 +1,11 @@
 import discord
 import functools
 
+from views.view import View as Parent
+
 class Dropdown(discord.ui.Select):
 	def __init__(self, ctx, options):
-		super().__init__(placeholder='Sélectionnez une catégorie...', min_values=1, max_values=1, options=options)
+		super().__init__(placeholder="Sélectionnez une catégorie...", min_values=1, max_values=1, options=options)
 		self.invoker = ctx.author
 
 	async def callback(self, interaction: discord.Interaction):
@@ -33,10 +35,10 @@ class Buttons(discord.ui.Button):
 		else:
 			await interaction.response.send_message("❌ Hé, ce n'est pas ta session !", ephemeral=True)
 
-class View(discord.ui.View):
-	def __init__(self, bot : discord.ext.commands.bot.Bot, ctx : discord.ext.commands.context.Context, homeembed : discord.embeds.Embed, ui : int):
+class View(Parent):
+	def __init__(self, mapping: dict, ctx: discord.ext.commands.context.Context, homeembed: discord.embeds.Embed, ui: int):
 		super().__init__()
-		self.ctx, self.bot, self.home = ctx, bot, homeembed
+		self.mapping, self.ctx, self.home = mapping, ctx, homeembed
 		self.index, self.buttons = 0, None
 
 		self.options, self.embeds = self.gen_embeds()
@@ -49,7 +51,7 @@ class View(discord.ui.View):
 
 	def add_buttons(self):
 		self.startB = Buttons(label="<<", style=discord.ButtonStyle.grey, command=self.set_page, args=0, ctx = self.ctx)
-		self.backB = Buttons(label="Précédent", style=discord.ButtonStyle.blurple, command=self.to_page, args=-1, ctx = self.ctx)
+		self.backB = Buttons(label="Retour", style=discord.ButtonStyle.blurple, command=self.to_page, args=-1, ctx = self.ctx)
 		self.nextB = Buttons(label="Suivant", style=discord.ButtonStyle.blurple, command=self.to_page, args=+1, ctx = self.ctx)
 		self.endB = Buttons(label=">>", style=discord.ButtonStyle.grey, command=self.set_page, args=len(self.options)-1, ctx = self.ctx)
 		self.quitB = Buttons(label="Quitter", style=discord.ButtonStyle.red, command=self.quit, ctx = self.ctx)
@@ -67,8 +69,8 @@ class View(discord.ui.View):
 
 	def get_cogs(self):
 		cogs = []
-		for cog in self.bot.extensions:
-			cogs.append(self.bot.get_cog(cog[5:len(cog)]))
+		for cog in self.mapping.keys():
+			cogs.append(cog)
 		return cogs
 
 	def gen_embeds(self):
@@ -79,13 +81,13 @@ class View(discord.ui.View):
 			if "help_custom" in dir(cog):
 				emoji, label, description = cog.help_custom()
 				options.append(discord.SelectOption(label=label, description=description, emoji=emoji))
-				embed = discord.Embed(title = str(emoji)+" Aide · "+str(label),description='`'+str(cog.__doc__)+'`', url='https://github.com/LavaL18/LavaL_Bot')
+				embed = discord.Embed(title = f"{emoji} Aide · {label}", description=f"{cog.__doc__.lstrip(' ')}", url="https://github.com/RomainNicolaon/LavaL_Bot")
 				embed.set_footer(text="Rappel : Les crochets tels que <> ne doivent pas être utilisés lors de l'exécution de commandes.", icon_url=self.ctx.message.author.display_avatar.url)
 
 				for command in cog.get_commands():
 					params = ""
-					for param in command.clean_params: params += " <"+str(param)+">"
-					embed.add_field(name=str(command.name)+str(params), value=str(command.help)+"\n\u200b", inline=False)
+					for param in command.clean_params: params += f" <{param}>"
+					embed.add_field(name=f"{command.name}{params}", value=f"{command.help}\n\u200b", inline=False)
 				embeds.append(embed)
 		return options, embeds
 

@@ -1,49 +1,72 @@
 import discord
+import asyncio
+
+from datetime import datetime, timedelta
 
 from discord.ext import commands
+from discord import app_commands
+from discord.app_commands import Choice
 
+class Usefull(commands.Cog, name="usefull"):
+	"""
+		Commandes utiles pour les développeurs et autres.
 
-class Usefull(commands.Cog, name="usefull", command_attrs=dict(hidden=False)):
-	"""Commandes utiles pour les développeurs et autres"""
-	def __init__(self, bot):
+		Require intents:
+			- message_content
+		
+		Require bot permission:
+			- send_messages
+	"""
+	def __init__(self, bot: commands.Bot) -> None:
 		self.bot = bot
 
-	def help_custom(self):
+	"""def help_custom(self) -> tuple[str]:
 		emoji = '🚩'
-		label = "Utile"
-		description = "Commandes utiles."
-		return emoji, label, description
+		label = "Usefull"
+		description = "Usefull commands."
+		return emoji, label, description"""
 
-	@commands.command(name='strawpoll', aliases=['straw', 'stp', 'sond', 'sondage'], pass_context=True)
-	async def strawpool(self, ctx, *, context):
-		"""Posez un sondage, et ajoutez 2 réactions pour voter avec votre communauté."""
-		crossmark, checkmark = self.bot.get_emoji(844992804480352257), self.bot.get_emoji(844992841938894849)
-		await ctx.message.delete()
-		message = await ctx.send("__*" + ctx.message.author.mention + "*__ : " + context)
-		await message.add_reaction(emoji=checkmark)
-		await message.add_reaction(emoji=crossmark)
+	@app_commands.command(name="reminder", description="Vous rappeller quelque chose.")
+	@app_commands.describe(hours="Hours.", minutes="Minutes.", seconds="Seconds.", message="Votre message à vous rappeler.")
+	@app_commands.choices(hours=[Choice(name=i, value=i) for i in range(0, 25)], minutes=[Choice(name=i, value=i) for i in range(0, 56, 5)], seconds=[Choice(name=i, value=i) for i in range(5, 56, 5)])
+	@app_commands.checks.bot_has_permissions(send_messages=True)
+	@app_commands.checks.has_permissions(use_slash_commands=True)
+	async def reminder(self, interaction: discord.Interaction, hours: int, minutes: int, seconds: int, message: str) -> None:
+		"""Reminds you of something."""
+		remind_in = round(datetime.timestamp(datetime.now() + timedelta(hours=hours, minutes=minutes, seconds=seconds)))
+		await interaction.response.send_message(f"Your message will be sent <t:{remind_in}:R>.")
+		
+		await asyncio.sleep(seconds+minutes*60+hours*(60**2))
+		await interaction.channel.send(f":bell: <@{interaction.user.id}> Reminder (<t:{remind_in}:R>): {message}")
 
-	@commands.command(name='profilepicture', aliases=['pp'])
-	async def profilepicture(self, ctx, member : discord.Member = None):
-		"""Affiche la photo de profil du membre sélectionné."""
-		author = member if member else ctx.message.author
-		await ctx.send(author.display_avatar.url)
+	@app_commands.command(name="strawpoll", description="Créez un sondage.")
+	@app_commands.describe(question="La question du sondage.")
+	@app_commands.checks.has_permissions(use_slash_commands=True)
+	async def avatar(self, interaction: discord.Interaction, question: str):
+		await interaction.response.send_message(content=f"__*{interaction.user.mention}*__ : {question}", allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=False))
+		message = await interaction.original_message()
+		await message.add_reaction("<a:yes_animated:844992841938894849>")
+		await message.add_reaction("<a:no_animated:844992804480352257>")
 
-	@commands.command(name='emojilist', aliases=['ce', 'el'], pass_context=True)
-	async def getcustomemojis(self, ctx):
+	@app_commands.command(name="emojilist", description="Retourner une liste de chaque emojis cutom.")
+	@app_commands.checks.has_permissions(use_slash_commands=True)
+	@commands.guild_only()
+	async def avatar(self, interaction: discord.Interaction):
 		"""Renvoie une liste de tous les emojis cutom du serveur actuel."""
-		embed_list, embed = [], discord.Embed(title="Liste d'emojis personnalisés ("+str(len(ctx.guild.emojis))+") :")
-		for i, emoji in enumerate(ctx.guild.emojis, start=1):
-			if i == 0 : i += 1
-			value = "`<:"+str(emoji.name)+":"+str(emoji.id)+">`" if not emoji.animated else "`<a:"+str(emoji.name)+":"+str(emoji.id)+">`"
-			embed.add_field(name=str(self.bot.get_emoji(emoji.id))+" - **:"+str(emoji.name)+":** - (*"+str(i)+"*)",value=value)
-			if i%6.25 == 400%6.25 and i != 0:
+		embed_list, embed = [], discord.Embed(title=f"Liste d'emojis personnalisés ({len(interaction.guild.emojis)}) :")
+		for i, emoji in enumerate(interaction.guild.emojis, start=1):
+			if i == 0 : 
+				i += 1
+			value = f"`<:{emoji.name}:{emoji.id}>`" if not emoji.animated else f"`<a:{emoji.name}:{emoji.id}>`"
+			embed.add_field(name=f"{self.bot.get_emoji(emoji.id)} - **:{emoji.name}:** - (*{i}*)",value=value)
+			if len(embed.fields) == 25:
 				embed_list.append(embed)
 				embed = discord.Embed()
-		embed_list.append(embed)
+		if len(embed.fields) > 0: 
+			embed_list.append(embed)
 
 		for message in embed_list:
-			await ctx.send(embed=message)
+			await interaction.response.send_message(embed=message)
 
-def setup(bot):
-	bot.add_cog(Usefull(bot))
+async def setup(bot):
+	await bot.add_cog(Usefull(bot))

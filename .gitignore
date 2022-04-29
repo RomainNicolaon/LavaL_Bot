@@ -5,3 +5,4 @@ auth/token.dat
 *.dat
 auth/token.dat
 __pycache__/bot.cpython-39.pyc
+config/bot.json

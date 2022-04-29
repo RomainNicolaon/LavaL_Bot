@@ -2,11 +2,14 @@ import asyncio
 import functools
 import itertools
 import math
+from operator import contains
 import random
 import discord
 import youtube_dl
 from async_timeout import timeout
 from discord.ext import commands
+from discord import app_commands
+from datetime import datetime
 
 # Silence useless bug reports messages
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -25,13 +28,13 @@ class YTDLSource(discord.PCMVolumeTransformer):
 		'extractaudio': True,
 		'audioformat': 'mp3',
 		'outtmpl': '%(extractor)s-%(id)s-%(title)s.%(ext)s',
-		'restrictfilenames': True,
-		'noplaylist': True,
+		'restrictfilenames': False,
+		'noplaylist': False,
 		'nocheckcertificate': True,
 		'ignoreerrors': False,
 		'logtostderr': False,
 		'quiet': True,
-		'no_warnings': True,
+		'no_warnings': False,
 		'default_search': 'auto',
 		'source_address': '0.0.0.0',
 	}
@@ -286,24 +289,25 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 
 	
 
-	@commands.command(name='join', invoke_without_subcommand=True)
+	@commands.hybrid_command(name='join', invoke_without_subcommand=True)
 	async def _join(self, ctx: commands.Context):
 		"""Rejoindre un canal vocal."""
-
 		destination = ctx.author.voice.channel
 		if ctx.voice_state.voice:
 			await ctx.voice_state.voice.move_to(destination)
 			return
-
 		ctx.voice_state.voice = await destination.connect()
+		await ctx.guild.change_voice_state(channel=destination, self_deaf=True)
+		await ctx.send(f'Connecté à {destination}.', ephemeral=True)
 
-	@commands.command(name='summon')
+	@commands.hybrid_command(name='summon')
 	@commands.has_permissions(manage_guild=True)
-	async def _summon(self, ctx: commands.Context, *, channel: discord.VoiceChannel = None):
+	@app_commands.guilds(discord.Object(id=953311718275153941))
+	async def _summon(self, ctx: commands.Context, *, channel: discord.VoiceChannel):
 		"""Invoque le bot sur un canal vocal. Si aucun canal n'a été spécifié, il rejoint votre canal."""
-
+		
 		if not channel and not ctx.author.voice:
-			raise VoiceError('Vous n\'êtes ni connecté à un canal vocal ni n\'avez spécifié un canal à rejoindre.')
+			raise ctx.send('Vous n\'êtes ni connecté à un canal vocal ni n\'avez spécifié un canal à rejoindre.', ephemeral=True)
 
 		destination = channel or ctx.author.voice.channel
 		if ctx.voice_state.voice:
@@ -311,50 +315,52 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 			return
 
 		ctx.voice_state.voice = await destination.connect()
-  
+		await ctx.send(f'Connecté au canal {destination.name}', ephemeral=True)	
+
 	def is_in_guild(guild_id):
 		async def predicate(ctx):
 			return ctx.guild and ctx.guild.id == guild_id
 		return commands.check(predicate)
 
-	@commands.command(name='leave', aliases=['disconnect', 'deco'])
+	@commands.hybrid_command(name='leave', aliases=['disconnect', 'deco'])
 	async def _leave(self, ctx: commands.Context):
 		"""Efface la file d'attente et quitte le canal vocal."""
-
+		
 		role_names = [role.name for role in ctx.author.roles]
 		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
 
 			if not ctx.voice_state.voice:
-				return await ctx.send('Non connecté à un canal vocal.')
+				return await ctx.send('Non connecté à un canal vocal.', ephemeral=True)
 
 			await ctx.voice_state.stop()
 			del self.voice_states[ctx.guild.id]
 
-			await ctx.message.add_reaction(self.bot.get_emoji(844992841938894849))
+			await ctx.send("<a:yes_animated:844992841938894849> Correctement déconnecté du canal vocal.", ephemeral=True)
 
-	@commands.command(name='volume')
+	@commands.hybrid_command(name='volume')
 	async def _volume(self, ctx: commands.Context, *, volume: int):
 		"""Règle le volume du lecteur."""
   
 		role_names = [role.name for role in ctx.author.roles]
 		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
-      
+	  
 			if not ctx.voice_state.is_playing:
-				return await ctx.send('Rien n\'est joué pour le moment.')
+				return await ctx.send('Rien n\'est joué pour le moment.', ephemeral=True)
 
 			if 0 > volume > 100:
-				return await ctx.send('Le volume doit être compris entre 0 et 100%')
+				return await ctx.send('Le volume doit être compris entre 0 et 100%', ephemeral=True)
 
 			ctx.voice_state.volume = volume / 100
 			await ctx.send('Volume du lecteur réglé sur {}%'.format(volume))
 
-	@commands.command(name='now', aliases=['current', 'playing'])
+	@commands.hybrid_command(name='now', aliases=['current', 'playing'])
 	async def _now(self, ctx: commands.Context):
 		"""Affiche la chanson en cours de lecture."""
+		if not ctx.voice_state.is_playing:
+			return await ctx.send('Rien n\'est joué pour le moment.', ephemeral=True)
+		await ctx.send(embed=ctx.voice_state.current.create_embed(), ephemeral=True)
 
-		await ctx.send(embed=ctx.voice_state.current.create_embed())
-
-	@commands.command(name='stop')
+	@commands.hybrid_command(name='stop')
 	async def _stop(self, ctx: commands.Context):
 		"""Arrête la lecture de la chanson et efface la file d'attente."""
   
@@ -365,14 +371,14 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 
 			if not ctx.voice_state.is_playing:
 				ctx.voice_state.voice.stop()
-				await ctx.message.add_reaction('⏹')
+				await ctx.send('<a:yes_animated:844992841938894849> Arrêté.', ephemeral=True)
 
-	@commands.command(name='skip')
+	@commands.hybrid_command(name='skip')
 	async def _skip(self, ctx: commands.Context):
-		"""Vote pour skip une chanson. Le demandeur peut skip automatiquement. 3 votes sont nécessaires pour que la chanson soit skip."""
+		"""Vote pour skip une chanson. 3 votes sont nécessaires pour que la chanson soit skip."""
 
 		if not ctx.voice_state.is_playing:
-			return await ctx.send('Je ne joue pas de musique en ce moment...')
+			return await ctx.send('Je ne joue pas de musique en ce moment...', ephemeral=True)
 
 		voter = ctx.message.author
 		if voter == ctx.voice_state.current.requester:
@@ -390,26 +396,28 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 				await ctx.send('Vote pour skip ajouté, actuellement à **{}/3**'.format(total_votes))
 
 		else:
-			await ctx.send('Vous avez déjà voté pour skip cette chanson.')
+			await ctx.send('Vous avez déjà voté pour skip cette chanson.', ephemeral=True)
 
-	@commands.command(name='forceskip', aliases=['fs'])
+	@commands.hybrid_command(name='forceskip', aliases=['fs'])
 	@commands.is_owner()
 	async def _forceskip(self, ctx: commands.Context):
+		"""Vote pour forcer le skip d'une chanson.
+		"""
 		if not ctx.voice_state.is_playing:
-			return await ctx.send('Je ne joue pas de musique en ce moment...')
+			return await ctx.send('Je ne joue pas de musique en ce moment...', ephemeral=True)
 
 		voter = ctx.message.author
 		if voter == ctx.voice_state.current.requester:
 			await ctx.message.add_reaction('⏭')
 			ctx.voice_state.skip()
 
-	@commands.command(name='queue')
+	@commands.hybrid_command(name='queue')
 	async def _queue(self, ctx: commands.Context, *, page: int = 1):
-		"""Affiche la file d'attente du lecteur. Vous pouvez éventuellement spécifier la page à afficher. Chaque page contient 10 éléments.
+		"""Affiche la file d'attente du lecteur.
 		"""
 
 		if len(ctx.voice_state.songs) == 0:
-			return await ctx.send('File d\'attente vide.')
+			return await ctx.send('File d\'attente vide.', ephemeral=True)
 
 		items_per_page = 10
 		pages = math.ceil(len(ctx.voice_state.songs) / items_per_page)
@@ -423,9 +431,9 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 
 		embed = (discord.Embed(description='**{} tracks:**\n\n{}'.format(len(ctx.voice_state.songs), queue))
 				 .set_footer(text='Page actuelle {}/{}'.format(page, pages)))
-		await ctx.send(embed=embed)
+		await ctx.send(embed=embed, ephemeral=True)
 
-	@commands.command(name='shuffle')
+	@commands.hybrid_command(name='shuffle')
 	async def _shuffle(self, ctx: commands.Context):
 		"""Mélange la file d'attente."""
 
@@ -433,12 +441,12 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
 
 			if len(ctx.voice_state.songs) == 0:
-				return await ctx.send('File d\'attente vide.')
+				return await ctx.send('File d\'attente vide.', ephemeral=True)
 
 			ctx.voice_state.songs.shuffle()
-			await ctx.message.add_reaction('✅')
+			await ctx.send('File d\'attente mélangée.', ephemeral=True)
 
-	@commands.command(name='remove')
+	@commands.hybrid_command(name='remove')
 	async def _remove(self, ctx: commands.Context, index: int):
 		"""Supprime un morceau de la file d'attente à un numéro donné."""
   
@@ -446,51 +454,49 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
 
 			if len(ctx.voice_state.songs) == 0:
-				return await ctx.send('File d\'attente vide.')
+				return await ctx.send('File d\'attente vide.', ephemeral=True)
 
 			ctx.voice_state.songs.remove(index - 1)
-			await ctx.message.add_reaction('✅')
+			await ctx.send('Morceau supprimé.', ephemeral=True)
 
-	@commands.command(name='loop')
+	@commands.hybrid_command(name='loop')
 	async def _loop(self, ctx: commands.Context):
-		"""Met en boucle le morceau en cours de lecture. Fais cette commande une nouvelle fois pour annuler la boucle de la chanson."""
+		"""Met en boucle le morceau en cours de lecture. Refais cette commande pour annuler la boucle."""
 
 		if not ctx.voice_state.is_playing:
-			return await ctx.send('Rien n\'est joué en ce moment.')
+			return await ctx.send('Rien n\'est joué en ce moment.', ephemeral=True)
 
 		# Inverse boolean value to loop and unloop.
 		ctx.voice_state.loop = not ctx.voice_state.loop
-		await ctx.message.add_reaction('✅')
+		await ctx.send('Loop {}.'.format('activé' if ctx.voice_state.loop else 'désactivé'), ephemeral=True)
 		
-	@commands.command(name='pause')
-	async def _pause(self, ctx):
+	@commands.hybrid_command(name='pause')
+	async def _pause(self, ctx:commands.Context):
 		"""Met en pause la chanson en cours"""
 
 		role_names = [role.name for role in ctx.author.roles]
 		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
-      
+	  
 			ctx.voice_client.pause()
-			await ctx.send("En pause ⏸️")
+			await ctx.send('Morceau en pause.', ephemeral=True)
 
-	@commands.command(name='resume')
-	async def _resume(self, ctx):
+	@commands.hybrid_command(name='resume')
+	async def _resume(self, ctx:commands.Context):
 		"""Reprends la chanson en cours"""
 
 		role_names = [role.name for role in ctx.author.roles]
 		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
 		
 			ctx.voice_client.resume()
-			await ctx.send("Reprise ⏯️")
+			await ctx.send('Morceau en cours.', ephemeral=True)
 
-	@commands.command(name='play', aliases=['p'])
+	@commands.hybrid_command(name='play', aliases=['p'])
+	@commands.cooldown(1, 15, commands.BucketType.guild)
 	async def _play(self, ctx: commands.Context, *, search: str):
 		"""Joue une chanson.
-		S'il y a des chansons en attente, celle-ci sera mise en attente jusqu'à ce que les
-		autres chansons aient fini de jouer.
-		Cette commande effectue automatiquement une recherche à partir de divers sites si aucune URL n'est fournie.
-		Une liste de ces sites peut être trouvée ici : https://rg3.github.io/youtube-dl/supportedsites.html
+		S'il y a des chansons en attente, celles-ci seront mises en attente.
 		"""
-
+		await ctx.defer()
 		if not ctx.voice_state.voice:
 			await ctx.invoke(self._join)
 
@@ -498,24 +504,27 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 			try:
 				source = await YTDLSource.create_source(ctx, search, loop=self.bot.loop)
 			except YTDLError as e:
-				await ctx.send('Une erreur s\'est produite lors du traitement de cette demande : {}'.format(str(e)))
+				await ctx.send('Une erreur s\'est produite lors du traitement de cette demande : {}'.format(str(e)), ephemeral=True)
 			else:
 				song = Song(source)
-
-				await ctx.voice_state.songs.put(song)
-				await ctx.send('Prochaine musique : {}'.format(str(source)))
+				test = source.duration
+				if "hours" in str(test):
+					await ctx.send('Cette chanson est trop longue. (plus de 1 heure)', ephemeral=True)
+				else:
+					await ctx.voice_state.songs.put(song)
+					await ctx.send('Prochaine musique : {}'.format(str(source)))
 
 
 	@_join.before_invoke
 	@_play.before_invoke
 	async def ensure_voice_state(self, ctx: commands.Context):
 		if not ctx.author.voice or not ctx.author.voice.channel:
-			raise commands.CommandError('Vous n\'êtes connecté à aucun canal vocal.')
+			await ctx.send('Vous n\'êtes connecté à aucun canal vocal.', ephemeral=True)
 		
 		if ctx.voice_client:
 			if ctx.voice_client.channel != ctx.author.voice.channel:
-				raise commands.CommandError('Le Bot est déjà dans un canal vocal.')
+				await ctx.send('Le Bot est déjà dans un canal vocal.', ephemeral=True)
 
 
-def setup(bot):
-	bot.add_cog(Musicplayer(bot))
+async def setup(bot):
+	await bot.add_cog(Musicplayer(bot))
