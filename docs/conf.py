@@ -35,7 +35,6 @@ extensions = [
     'sphinx.ext.extlinks',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon',
-    'attributetable',
     'resourcelinks',
     'nitpick_file_ignorer',
 ]
