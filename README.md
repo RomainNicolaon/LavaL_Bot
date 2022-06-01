@@ -2,6 +2,7 @@
 ![GitHub last commit](https://img.shields.io/github/last-commit/RomainNicolaon/LavaL_Bot)
 ![](https://img.shields.io/pypi/pyversions/discord.py.svg)
 ![GitHub last release](https://img.shields.io/github/v/release/RomainNicolaon/LavaL_Bot?color=blueviolet)
+[![Documentation Status](https://readthedocs.org/projects/laval-bot/badge/?version=master)](https://laval-bot.readthedocs.io/fr/master/?badge=master)
 
 ## LavaL_Bot 
 *(forked from [Algobot](https://github.com/PaulMarisOUMary/Algosup-Discord))*
