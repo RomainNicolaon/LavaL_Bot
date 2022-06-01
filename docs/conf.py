@@ -270,14 +270,6 @@ html_static_path = ['_static']
 
 # The name of a javascript file (relative to the configuration directory) that
 # implements a search results scorer. If empty, the default will be used.
-html_search_scorer = '_static/scorer.js'
-
-html_js_files = [
-  'custom.js',
-  'settings.js',
-  'copy.js',
-  'sidebar.js'
-]
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'discord.pydoc'
