@@ -22,7 +22,7 @@ class Admin(commands.Cog, name="admin"):
 		self.welcome = bot.config["database"]["welcome"]
 		self.prefix = bot.config["database"]["prefix"]
 
-	def help_custom(self) -> tuple[str]:
+	def help_custom(self) -> tuple[str, str, str]:
 		emoji = '⚙️'
 		label = "Admin"
 		description = "Affiche la liste des commandes d'administrateur."

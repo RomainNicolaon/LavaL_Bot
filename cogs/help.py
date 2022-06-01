@@ -102,7 +102,7 @@ class Help(commands.Cog, name="help"):
 	async def cog_unload(self) -> None:
 		self.bot.help_command = self._original_help_command
 
-	def help_custom(self) -> tuple[str]:
+	def help_custom(self) -> tuple[str, str, str]:
 		emoji = '🆘'
 		label = "Help"
 		description = "Help utilities."

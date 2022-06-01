@@ -2,7 +2,7 @@ import discord
 import logging
 
 from classes.database import DataSQL
-from classes.utilities import load_config, cogs_manager, set_logging, cogs_directory
+from classes.utilities import load_config, clean_close, cogs_manager, set_logging, cogs_directory
 
 from os import listdir
 from discord.ext import commands
@@ -22,12 +22,18 @@ class Bot(commands.Bot):
 	async def on_ready(self):
 		print(f"Logged as: {self.user} | discord.py{discord.__version__}\nGuilds: {len(self.guilds)} Users: {len(self.users)} Config: {len(self.config)}")
 
+	async def close(self):
+		await self.database.close()
+		await super().close()
+
+		print("Shutting down...")
+
 	async def startup(self):
 		"""Sync application commands"""
 		await self.wait_until_ready()
 		
 		await self.tree.sync()
-		# await self.tree.sync(guild=discord.Object(id=953311718275153941)) # dev
+		#await self.tree.sync(guild=discord.Object(id=332234497078853644)) # dev
 		
 	async def setup_hook(self):
 		"""Initialize the db, prefixes & cogs."""
@@ -50,8 +56,9 @@ class Bot(commands.Bot):
 		self.loop.create_task(self.startup())
 
 if __name__ == '__main__':
-	set_logging(level=logging.WARNING, filename="discord.log")
+	clean_close() # Avoid Windows EventLoopPolicy Error
 
 	bot = Bot()
 	bot.config = load_config()
+	bot.logger = set_logging(console_level=logging.WARN, file_level=logging.INFO, filename="discord.log")
 	bot.run(bot.config["bot"]["token"], reconnect=True)

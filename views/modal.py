@@ -1,46 +1,25 @@
 import discord
+import functools
 
 from views.view import View as Parent
 
-class SampleModal(discord.ui.Modal, title="Exemple de Modal"):
-	name = discord.ui.TextInput(
-		label = "Nom (requis)",
-		placeholder = "Votre nom ici...",
-		required = True,
-		min_length = 3
-	)
+class CustomModal(discord.ui.Modal):
+	def __init__(self, title: str, fields: dict[str, discord.ui.TextInput], when_submit: functools.partial):
+		super().__init__(title=title)
 
-	feedback = discord.ui.TextInput(
-		label = "Que pensez-vous de cette nouvelle fonctionnalité ?",
-		placeholder = "Tapez vos commentaires ici...",
-		style = discord.TextStyle.long,
-		required = False,
-		max_length = 300
-	)
+		self.values : dict[str, str] = {}
+		self.when_submit = when_submit
+
+		self.__fields : dict[str, functools.partial] = {}
+		for i, item in enumerate(fields.items()):
+			key, value = item
+			self.__fields[key] = functools.partial(self.__get_value, self.add_item(value).children[i])
+
+	def __get_value(self, children: discord.ui.TextInput) -> str:
+		return children.value
 
 	async def on_submit(self, interaction: discord.Interaction):
-		await interaction.response.send_message(f"Merci pour vos commentaires, `{self.name.value}` !\n{self.feedback.value}", ephemeral=True)
+		for key, value in self.__fields.items():
+			self.values[key] = value()
 
-	async def on_error(self, error: Exception, interaction: discord.Interaction) -> None:
-		await interaction.response.send_message("Oups ! Quelque chose a mal tourné.", ephemeral=True)
-
-
-class View(Parent):
-	"""Button to Modal"""
-	def __init__(self, source, label, style=discord.ButtonStyle.grey, emoji=None, disabled=False):
-		super().__init__()
-		self.source = source
-		self.button.label = label
-		self.button.style = style
-		self.button.emoji = emoji
-		self.button.disabled = disabled
-
-	async def button_func(self, interaction: discord.Interaction):
-		if self.source.author != interaction.user:
-			await interaction.response.send_message("Vous ne pouvez pas ouvrir ce Modal.", ephemeral=True)
-		else:
-			await interaction.response.send_modal(SampleModal())
-
-	@discord.ui.button(style = discord.ButtonStyle.blurple)
-	async def button(self, interaction: discord.Interaction, button: discord.ui.Button):
-		await self.button_func(interaction)
+		await self.when_submit(self, interaction)

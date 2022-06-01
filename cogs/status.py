@@ -8,11 +8,11 @@ class Status(commands.Cog, name="status"):
 	def __init__(self, bot: commands.Bot) -> None:
 		self.bot = bot
 
-	"""def help_custom(self) -> tuple[str]:
+	def help_custom(self) -> tuple[str, str, str]:
 		emoji = '🏷️'
 		label = "Status"
 		description = "Configurer le statut du bot."
-		return emoji, label, description"""
+		return emoji, label, description
 
 	async def cog_load(self):
 		self.task_change_status = self.bot.loop.create_task(self.loop_change_status())

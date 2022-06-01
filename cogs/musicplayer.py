@@ -2,14 +2,12 @@ import asyncio
 import functools
 import itertools
 import math
-from operator import contains
 import random
 import discord
 import youtube_dl
 from async_timeout import timeout
 from discord.ext import commands
 from discord import app_commands
-from datetime import datetime
 
 # Silence useless bug reports messages
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -260,8 +258,8 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 		self.bot = bot
 		self.voice_states = {}
 		
-	def help_custom(self):
-		emoji = '🎶'
+	def help_custom(self) -> tuple[str, str, str]:
+		emoji = '🎵'
 		label = "Lecteur de musiques"
 		description = "Description des commandes du Lecteur de musiques, comme play, pause, stop, etc"
 		return emoji, label, description
@@ -302,7 +300,6 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 
 	@commands.hybrid_command(name='summon')
 	@commands.has_permissions(manage_guild=True)
-	@app_commands.guilds(discord.Object(id=953311718275153941))
 	async def _summon(self, ctx: commands.Context, *, channel: discord.VoiceChannel):
 		"""Invoque le bot sur un canal vocal. Si aucun canal n'a été spécifié, il rejoint votre canal."""
 		

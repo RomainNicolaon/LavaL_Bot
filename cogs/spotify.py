@@ -1,4 +1,3 @@
-import time
 import discord
 from PIL import Image, ImageFont, ImageDraw
 from io import BytesIO
@@ -21,16 +20,14 @@ class Spotify(commands.Cog, name="spotify"):
 	def __init__(self, bot: commands.Bot) -> None:
 		self.bot = bot
 
-	def help_custom(self) -> tuple[str]:
-		emoji = "<:spotify:880896591756656641>"
+	def help_custom(self) -> tuple[str, str, str]:
+		emoji = '<:spotify:895219605105172502>'
 		label = "Spotify"
 		description = "Commandes de statut Spotify."
 		return emoji, label, description
 
 	@app_commands.command(name="spotify")
-	@app_commands.guilds(discord.Object(id=953311718275153941))
 	@app_commands.describe(user="Informations de l'activité Spotify de ce membre")
-	@app_commands.checks.has_permissions(use_slash_commands=True)
 	async def spotify_activity(self, interaction: discord.Interaction, user: discord.Member = None):
 		"""Activité d'un membre sur Spotify"""
 		if not user: 

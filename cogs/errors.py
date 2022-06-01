@@ -4,25 +4,31 @@ from discord.ext import commands
 from discord import app_commands
 
 class Errors(commands.Cog, name="errors"):
-	"""Gestionnaire d'erreurs."""
+	"""Errors handler."""
 	def __init__(self, bot: commands.Bot) -> None:
 		self.bot = bot
-		bot.tree.error(coro = self.dispatch_to_app_command_handler)
+		bot.tree.error(coro = self.__dispatch_to_app_command_handler)
 
 		self.default_error_message = "🕳️ There is an error."
 
 	"""def help_custom(self):
-		emoji = "<a:no_animated:844992804480352257>"
+		emoji = "<a:crossmark:842800737221607474>"
 		label = "Error"
-		description = "Un gestionnaire d'erreurs personnalisé. Rien à voir ici."
+		description = "A custom errors handler. Nothing to see here."
 		return emoji, label, description"""
 
-	async def dispatch_to_app_command_handler(self, interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
+	def trace_error(self, level: str, error: Exception):
+		self.bot.logger.name = f"discord.{level}"
+		self.bot.logger.error(msg=type(error).__name__, exc_info=error)
+		
+		raise error
+
+	async def __dispatch_to_app_command_handler(self, interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
 		self.bot.dispatch("app_command_error", interaction, error)
 
 	async def __respond_to_interaction(self, interaction: discord.Interaction) -> bool:
 		try:
-			await interaction.response.send_message(self.default_error_message, ephemeral=True)
+			await interaction.response.send_message(content=self.default_error_message, ephemeral=True)
 			return True
 		except discord.errors.InteractionResponded:
 			return False
@@ -44,7 +50,7 @@ class Errors(commands.Cog, name="errors"):
 				if isinstance(error, commands.HybridCommandError):
 					error = error.original # Access to the original error
 			else:
-				discord_message = await ctx.send(self.default_error_message, ephemeral=True)
+				discord_message = await ctx.send(self.default_error_message)
 				edit = discord_message.edit
 
 			raise error
@@ -54,49 +60,49 @@ class Errors(commands.Cog, name="errors"):
 			await edit(content=f"🕳️ {d_error}")
 		# UserInputError
 		except commands.MissingRequiredArgument as d_error:
-			await edit(content=f"🕳️ Il manque quelque chose.. `{ctx.clean_prefix}{ctx.command.name} <{'> <'.join(ctx.command.clean_params)}>`")
+			await edit(content=f"🕳️ Something is missing. `{ctx.clean_prefix}{ctx.command.name} <{'> <'.join(ctx.command.clean_params)}>`")
 		# UserInputError -> BadArgument
 		except commands.MemberNotFound or commands.UserNotFound as d_error:
-			await edit(content=f"🕳️ Membre `{str(d_error).split(' ')[1]}` non trouvé ! N'hésitez pas à envoyer un ping au membre demandé.")
+			await edit(content=f"🕳️ Member `{str(d_error).split(' ')[1]}` not found ! Don't hesitate to ping the requested member.")
 		# UserInputError -> BadUnionArgument | BadLiteralArgument | ArgumentParsingError
 		except commands.BadArgument or commands.BadUnionArgument or commands.BadLiteralArgument or commands.ArgumentParsingError as d_error:
 			await edit(content=f"🕳️ {d_error}")
 		# CommandNotFound
 		except commands.CommandNotFound as d_error:
-			await edit(content=f"🕳️ Commande `{str(d_error).split(' ')[1]}` non trouvée !")
+			await edit(content=f"🕳️ Command `{str(d_error).split(' ')[1]}` not found !")
 		# CheckFailure
 		except commands.PrivateMessageOnly:
-			await edit(content="🕳️ Cette commande ne peut pas être utilisée dans un serveur, essayez en message privé.")
+			await edit(content="🕳️ This command canno't be used in a guild, try in direct message.")
 		except commands.NoPrivateMessage:
-			await edit(content="🕳️ Cela ne fonctionne pas comme prévu.")
+			await edit(content="🕳️ This is not working as excpected.")
 		except commands.NotOwner:
-			await edit(content="🕳️ Vous devez posséder ce robot pour exécuter cette commande.")
+			await edit(content="🕳️ You must own this bot to run this command.")
 		except commands.MissingPermissions as d_error:
-			await edit(content=f"🕳️ Votre compte requiert les permissions suivantes : {'` `'.join(d_error.missing_permissions)}.")
+			await edit(content=f"🕳️ Your account require the following permissions: `{'` `'.join(d_error.missing_permissions)}`.")
 		except commands.BotMissingPermissions as d_error:
 			if not "send_messages" in d_error.missing_permissions:
-				await edit(content=f"🕳️ Le bot nécessite les permissions suivantes : {'` `'.join(d_error.missing_permissions)}.")
+				await edit(content=f"🕳️ The bot require the following permissions: `{'` `'.join(d_error.missing_permissions)}`.")
 		except commands.CheckAnyFailure or commands.MissingRole or commands.BotMissingRole or commands.MissingAnyRole or commands.BotMissingAnyRole as d_error:
 			await edit(content=f"🕳️ {d_error}")
 		except commands.NSFWChannelRequired:
-			await edit(content="🕳️ Cette commande nécessite un canal NSFW.")
+			await edit(content="🕳️ This command require an NSFW channel.")
 		# DisabledCommand
 		except commands.DisabledCommand:
-			await edit(content="🕳️ Désolé, cette commande est désactivée.")
+			await edit(content="🕳️ Sorry this command is disabled.")
 		# CommandInvokeError
 		except commands.CommandInvokeError as d_error:
 			await edit(content=f"🕳️ {d_error.original}")
 		# CommandOnCooldown
 		except commands.CommandOnCooldown as d_error:
-			await edit(content=f"🕳️ La commande est en cooldown, attendez `{str(d_error).split(' ')[7]}` !")
+			await edit(content=f"🕳️ Command is on cooldown, wait `{str(d_error).split(' ')[7]}` !")
 		# MaxConcurrencyReached
 		except commands.MaxConcurrencyReached as d_error:
-			await edit(content=f"🕳️ Concurrence maximale atteinte. Nombre maximum d'utilisateurs concurrents autorisés : `{d_error.number}`, par `{d_error.per}`.")
+			await edit(content=f"🕳️ Max concurrency reached. Maximum number of concurrent invokers allowed: `{d_error.number}`, per `{d_error.per}`.")
 		# HybridCommandError
 		except commands.HybridCommandError as d_error:
 			await self.get_app_command_error(ctx.interaction, error)
 		except Exception as e:
-			print(f"! Cogs.errors get_command_error : {type(error).__name__} : {error}\n! Internal Error : {e}\n")
+			self.trace_error("get_command_error", e)
 
 	@commands.Cog.listener("on_app_command_error")
 	async def get_app_command_error(self, interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
@@ -117,11 +123,11 @@ class Errors(commands.Cog, name="errors"):
 				await edit(content=f"🕳️ `{type(d_error.original).__name__}` : {d_error.original}")
 		except app_commands.CheckFailure as d_error:
 			if isinstance(d_error, app_commands.errors.CommandOnCooldown):
-				await edit(content=f"🕳️ La commande est en cooldown, attendez `{str(d_error).split(' ')[7]}` !")
+				await edit(content=f"🕳️ Command is on cooldown, wait `{str(d_error).split(' ')[7]}` !")
 			else:
 				await edit(content=f"🕳️ `{type(d_error).__name__}` : {d_error}")
 		except app_commands.CommandNotFound:
-			await edit(content=f"🕳️ La commande n'a pas été trouvée. Il semble qu'il s'agisse d'un bug de discord, probablement dû à une désynchronisation. Il se peut que plusieurs commandes portent le même nom, vous devriez en essayer une autre.")
+			await edit(content=f"🕳️ Command was not found.. Seems to be a discord bug, probably due to desynchronization.\nMaybe there is multiple commands with the same name, you should try the other one.")
 		except Exception as e: 
 			"""
 			Caught here:
@@ -131,7 +137,7 @@ class Errors(commands.Cog, name="errors"):
 			app_commands.CommandSignatureMismatch
 			"""
 
-			print(f"! Cogs.errors get_app_command_error : {type(error).__name__} : {error}\n! Internal Error : {e}\n")
+			self.trace_error("get_app_command_error", e)
 
 	@commands.Cog.listener("on_view_error")
 	async def get_view_error(self, interaction: discord.Interaction, error: Exception, item: any):
@@ -141,8 +147,17 @@ class Errors(commands.Cog, name="errors"):
 		except discord.errors.Forbidden:
 			pass
 		except Exception as e:
-			print(f"! Cogs.errors get_view_error : {type(error).__name__} : {error}\n! Internal Error : {e}\n")
+			self.trace_error("get_view_error", e)
 
+	@commands.Cog.listener("on_modal_error")
+	async def get_modal_error(self, interaction: discord.Interaction, error: Exception):
+		"""Modal Error Handler"""
+		try:
+			raise error
+		except discord.errors.Forbidden:
+			pass
+		except Exception as e:
+			self.trace_error("get_modal_error", e)
 
 async def setup(bot):
 	await bot.add_cog(Errors(bot))

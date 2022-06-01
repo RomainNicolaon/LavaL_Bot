@@ -25,7 +25,7 @@ class PrivateVocal(commands.Cog, name="privatevocal"):
 		self.MAIN_CHANNEL_NAME = self.private_config["main_channel_name"]
 		self.CHANNEL_NAME = self.private_config["channel_name"]
 
-	def help_custom(self) -> tuple[str]:
+	def help_custom(self) -> tuple[str, str, str]:
 		emoji = '💭'
 		label = "Private Vocal"
 		description = "Créez un canal vocal privé."
@@ -74,8 +74,6 @@ class PrivateVocal(commands.Cog, name="privatevocal"):
 
 	@app_commands.command(name="limitusers", description="Limite le nombre de personnes dans un channel vocal.")
 	@app_commands.choices(limit=[Choice(name=str(i), value=i) for i in range(1, 16)])
-	@app_commands.guilds(discord.Object(id=953311718275153941))
-	@app_commands.checks.has_permissions(use_slash_commands=True)
 	async def ping(self, interaction: discord.Interaction, limit:int=None):
 		try:
 			actual_channel = interaction.user.voice.channel

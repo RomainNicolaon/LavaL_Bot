@@ -66,11 +66,9 @@ class Views(commands.Cog, name="views"):
 	@commands.command(name="modal")
 	@commands.guild_only()
 	async def moda(self, ctx):
-		"""Découvrez le lien dans un bouton avec cette fonctionnalité."""
-		view = modal.View(source=ctx, label="Démonstration de l'utilisation de la fonction Modal, cliquez ici.", emoji='📧')
+		"""Découvrez le lien dans cette feature."""
+		view = modal.View(invoke=ctx)
 		await ctx.send(view=view)
-
-
 
 async def setup(bot):
 	await bot.add_cog(Views(bot))

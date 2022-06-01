@@ -38,10 +38,11 @@ class Welcome(commands.Cog, name="welcome", command_attrs=dict(hidden=False)):
 		response = await self.bot.database.lookup(self.welcome_data["table"], "is_active", "guild_id", str(member.guild.id))
 		if response and response[0][0]:
 			if guild.system_channel:
-				embed = discord.Embed(color=0x4a3d9a)
-				embed.add_field(name="Au revoir", value=f"**<@!{member.id}>** vient de quitter **{member.guild.name}**", inline=False)
-				embed.set_thumbnail(url="https://i.pinimg.com/originals/2d/02/44/2d024443d7e18982443275923492ec5e.gif")
-				await guild.system_channel.send(embed=embed)
+				if member.id != self.bot.user.id:
+					embed = discord.Embed(color=0x4a3d9a)
+					embed.add_field(name="Au revoir", value=f"**<@!{member.id}>** vient de quitter **{member.guild.name}**", inline=False)
+					embed.set_thumbnail(url="https://i.pinimg.com/originals/2d/02/44/2d024443d7e18982443275923492ec5e.gif")
+					await guild.system_channel.send(embed=embed)
 	
 	@commands.Cog.listener()
 	async def on_guild_join(self, guild):

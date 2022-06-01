@@ -20,17 +20,16 @@ class Usefull(commands.Cog, name="usefull"):
 	def __init__(self, bot: commands.Bot) -> None:
 		self.bot = bot
 
-	"""def help_custom(self) -> tuple[str]:
+	def help_custom(self) -> tuple[str, str, str]:
 		emoji = '🚩'
 		label = "Usefull"
 		description = "Usefull commands."
-		return emoji, label, description"""
+		return emoji, label, description
 
 	@app_commands.command(name="reminder", description="Vous rappeller quelque chose.")
 	@app_commands.describe(hours="Hours.", minutes="Minutes.", seconds="Seconds.", message="Votre message à vous rappeler.")
 	@app_commands.choices(hours=[Choice(name=i, value=i) for i in range(0, 25)], minutes=[Choice(name=i, value=i) for i in range(0, 56, 5)], seconds=[Choice(name=i, value=i) for i in range(5, 56, 5)])
 	@app_commands.checks.bot_has_permissions(send_messages=True)
-	@app_commands.checks.has_permissions(use_slash_commands=True)
 	async def reminder(self, interaction: discord.Interaction, hours: int, minutes: int, seconds: int, message: str) -> None:
 		"""Reminds you of something."""
 		remind_in = round(datetime.timestamp(datetime.now() + timedelta(hours=hours, minutes=minutes, seconds=seconds)))
@@ -41,7 +40,6 @@ class Usefull(commands.Cog, name="usefull"):
 
 	@app_commands.command(name="strawpoll", description="Créez un sondage.")
 	@app_commands.describe(question="La question du sondage.")
-	@app_commands.checks.has_permissions(use_slash_commands=True)
 	async def avatar(self, interaction: discord.Interaction, question: str):
 		await interaction.response.send_message(content=f"__*{interaction.user.mention}*__ : {question}", allowed_mentions=discord.AllowedMentions(everyone=False, users=True, roles=False))
 		message = await interaction.original_message()
@@ -49,7 +47,6 @@ class Usefull(commands.Cog, name="usefull"):
 		await message.add_reaction("<a:no_animated:844992804480352257>")
 
 	@app_commands.command(name="emojilist", description="Retourner une liste de chaque emojis cutom.")
-	@app_commands.checks.has_permissions(use_slash_commands=True)
 	@commands.guild_only()
 	async def avatar(self, interaction: discord.Interaction):
 		"""Renvoie une liste de tous les emojis cutom du serveur actuel."""

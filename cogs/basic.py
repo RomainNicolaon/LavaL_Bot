@@ -1,7 +1,7 @@
 import time
 
 from discord.ext import commands
-from discord import Interaction, InteractionMessage, app_commands
+from discord import app_commands
 from discord.app_commands import Choice
 import discord
 
@@ -18,7 +18,7 @@ class Basic(commands.Cog, name="basic"):
 	def __init__(self, bot: commands.Bot) -> None:
 		self.bot = bot
 
-	def help_custom(self) -> tuple[str]:
+	def help_custom(self) -> tuple[str, str, str]:
 		emoji = '📙'
 		label = "Basic"
 		description = "Des commandes de base, comme ping."
@@ -28,7 +28,6 @@ class Basic(commands.Cog, name="basic"):
 	@commands.cooldown(1, 5, commands.BucketType.user)
 	@commands.bot_has_permissions(send_messages=True)
 	@app_commands.checks.cooldown(1, 5.0, key=lambda i: (i.guild_id, i.user.id))
-	@app_commands.checks.has_permissions(use_slash_commands=True)
 	async def ping(self, ctx: commands.Context):
 		"""Afficher la latence en secondes et millisecondess"""
 		before = time.monotonic()
