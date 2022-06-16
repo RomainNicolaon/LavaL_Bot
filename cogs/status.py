@@ -4,15 +4,15 @@ import discord
 from discord.ext import commands
 
 class Status(commands.Cog, name="status"):
-	"""Une boucle pour définir l'état actuel du bot."""
+	"""A loop to set the current status of the bot."""
 	def __init__(self, bot: commands.Bot) -> None:
 		self.bot = bot
 
-	def help_custom(self) -> tuple[str, str, str]:
+	"""def help_custom(self) -> tuple[str]:
 		emoji = '🏷️'
 		label = "Status"
-		description = "Configurer le statut du bot."
-		return emoji, label, description
+		description = "Setup the status of the bot."
+		return emoji, label, description"""
 
 	async def cog_load(self):
 		self.task_change_status = self.bot.loop.create_task(self.loop_change_status())
@@ -22,16 +22,16 @@ class Status(commands.Cog, name="status"):
 
 	async def loop_change_status(self) -> None:
 		await self.bot.wait_until_ready()
-		status_message = self.bot.config["bot"]["bot_status"]
+		subconfig_data = self.bot.config["cogs"][self.__cog_name__.lower()]
 		while not self.bot.is_closed():
-			for status in status_message:
+			for status in subconfig_data["status"]:
 				await self.bot.change_presence(
 					activity=discord.Streaming(
 						name=status, 
 						url="https://www.twitch.tv/laval_tv"), 
 					status=discord.Status.do_not_disturb
 				)
-				await asyncio.sleep(10)
+				await asyncio.sleep(subconfig_data["cooldown"])
 
 
 

@@ -5,10 +5,11 @@ from views import bool
 from views import dropdown
 from views import link
 from views import modal
+from classes.discordbot import DiscordBot
 
 class Views(commands.Cog, name="views"):
 	"""Cogs expérimentales, nouvelles fonctionnalités telles que les boutons, la liste déroulante ou le chuchotement."""
-	def __init__(self, bot: commands.Bot) -> None:
+	def __init__(self, bot: DiscordBot) -> None:
 		self.bot = bot
 
 	def help_custom(self) -> tuple[str]:
@@ -70,5 +71,5 @@ class Views(commands.Cog, name="views"):
 		view = modal.View(invoke=ctx)
 		await ctx.send(view=view)
 
-async def setup(bot):
+async def setup(bot: DiscordBot):
 	await bot.add_cog(Views(bot))

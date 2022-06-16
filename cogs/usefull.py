@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from discord.ext import commands
 from discord import app_commands
 from discord.app_commands import Choice
+from classes.discordbot import DiscordBot
 
 class Usefull(commands.Cog, name="usefull"):
 	"""
@@ -17,7 +18,7 @@ class Usefull(commands.Cog, name="usefull"):
 		Require bot permission:
 			- send_messages
 	"""
-	def __init__(self, bot: commands.Bot) -> None:
+	def __init__(self, bot: DiscordBot) -> None:
 		self.bot = bot
 
 	def help_custom(self) -> tuple[str, str, str]:
@@ -65,5 +66,5 @@ class Usefull(commands.Cog, name="usefull"):
 		for message in embed_list:
 			await interaction.response.send_message(embed=message)
 
-async def setup(bot):
+async def setup(bot: DiscordBot):
 	await bot.add_cog(Usefull(bot))

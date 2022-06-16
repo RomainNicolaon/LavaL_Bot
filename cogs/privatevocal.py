@@ -4,10 +4,13 @@ from datetime import datetime
 from discord.ext import commands
 from discord import app_commands
 from discord.app_commands import Choice
+from typing import Union
+
+from classes.discordbot import DiscordBot
 
 class PrivateVocal(commands.Cog, name="privatevocal"):
 	"""
-		Créez et gérez des canaux vocaux privés.
+		Create and manage private vocal channels.
 	
 		Require intents:
 			- voice_states
@@ -17,18 +20,19 @@ class PrivateVocal(commands.Cog, name="privatevocal"):
 			- manage_permissions
 			- move_members
 	"""
-	def __init__(self, bot: commands.Bot) -> None:
+	def __init__(self, bot: DiscordBot) -> None:
 		self.bot = bot
-		self.private_config = bot.config["bot"]["private_vocal"]
+		
+		self.subconfig_data: dict = self.bot.config["cogs"][self.__cog_name__.lower()]
 
-		self.tracker = dict()
-		self.MAIN_CHANNEL_NAME = self.private_config["main_channel_name"]
-		self.CHANNEL_NAME = self.private_config["channel_name"]
+		self.tracker: dict[int, dict] = dict()
+		self.MAIN_CHANNEL_NAME = self.subconfig_data["main_channel_name"]
+		self.CHANNEL_NAME = self.subconfig_data["channel_name"]
 
 	def help_custom(self) -> tuple[str, str, str]:
 		emoji = '💭'
 		label = "Private Vocal"
-		description = "Créez un canal vocal privé."
+		description = "Create a private vocal channel."
 		return emoji, label, description
 
 	def __guild_in(self, member: discord.Member) -> None:
@@ -37,11 +41,14 @@ class PrivateVocal(commands.Cog, name="privatevocal"):
 				self.tracker[member.guild.id]["cooldown"] = dict()
 				self.tracker[member.guild.id]["channels"] = dict()
 
-	def __is_join_channel(self, channel: discord.VoiceChannel) -> bool:
+	def __is_private_vocal(self, channel: discord.VoiceChannel, guild_channels: dict[int, int]) -> bool:
+		return channel.id in guild_channels
+
+	def __is_join_channel(self, channel: Union[discord.VoiceChannel, discord.StageChannel]) -> bool:
 		return channel.user_limit == 1 and channel.name == self.MAIN_CHANNEL_NAME
 	
-	def __is_user_on_cooldown(self, user: discord.Member, guild_cooldown: dict):
-		return (user.id in guild_cooldown) and datetime.now().timestamp() - guild_cooldown[user.id].timestamp() < self.private_config["cooldown"]
+	def __is_user_on_cooldown(self, user: discord.Member, guild_cooldown: dict) -> bool:
+		return (user.id in guild_cooldown) and datetime.now().timestamp() - guild_cooldown[user.id].timestamp() < self.subconfig_data["cooldown"]
 
 	@commands.Cog.listener("on_voice_state_update")
 	async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
@@ -53,8 +60,8 @@ class PrivateVocal(commands.Cog, name="privatevocal"):
 		if after.channel is not None and self.__is_join_channel(after.channel):
 			if self.__is_user_on_cooldown(member, guild_cooldown):
 				await member.move_to(None)
-				remaining = self.private_config["cooldown"] - (datetime.now() - guild_cooldown[member.id]).total_seconds()
-				await member.send(f"Désolé, vous êtes en cooldown, temps restant : `{round(remaining)}` secondes.")
+				remaining = self.subconfig_data["cooldown"] - (datetime.now() - guild_cooldown[member.id]).total_seconds()
+				await member.send(f"Hey doucement l'ami ne spam pas veux tu, tu es en cooldown, temps restant: `{round(remaining)}` secondes.")
 			
 			else:
 				private_vocal = await member.guild.create_voice_channel(self.CHANNEL_NAME.format(user = member), category=after.channel.category)
@@ -72,20 +79,28 @@ class PrivateVocal(commands.Cog, name="privatevocal"):
 				del guild_id["channels"][before.channel.id]
 				await before.channel.delete()
 
-	@app_commands.command(name="limitusers", description="Limite le nombre de personnes dans un channel vocal.")
-	@app_commands.choices(limit=[Choice(name=str(i), value=i) for i in range(1, 16)])
-	async def ping(self, interaction: discord.Interaction, limit:int=None):
-		try:
-			actual_channel = interaction.user.voice.channel
-			members_in_chanel = len(interaction.channel.members)-1
-			if limit is None:
-				limit = 1
-				await actual_channel.edit(user_limit=members_in_chanel)
-			else:
-				await actual_channel.edit(user_limit=limit)
-			await interaction.response.send_message(f"Le nombre d'utilisateurs dans le channel vocal a été limité à `{limit}`.", ephemeral=True)
-		except Exception as e:
-			await interaction.response.send_message(f"<a:no_animated:844992804480352257> Tu dois être dans un salon vocal pour utiliser cette commande !", ephemeral=True)
+	@commands.hybrid_command(name="userlimit", description="Limit the number of user(s) in your private channel.")
+	@commands.cooldown(1, 10, commands.BucketType.user)
+	@commands.bot_has_permissions(send_messages=True)
+	@app_commands.choices(limit=[Choice(name=str(i), value=i) for i in range(1, 26)])
+	@app_commands.describe(limit="The number of max user(s) in your private channel.")
+	async def lock_private_vocal(self, ctx: commands.Context, limit: int = None):
+		"""Limit the number of user(s) in your private channel."""
+		voice = ctx.author.voice
+		if not voice:
+			await ctx.send("You're not in a voice channel.", ephemeral=True)
+			return
+		elif not self.__is_private_vocal(voice.channel, self.tracker[ctx.guild.id]["channels"]):
+			await ctx.send("You're not in a private vocal channel.", ephemeral=True)
+			return
+		
+		if not limit or limit < 1 or limit > 99:
+			limit = len(voice.channel.members)
 
-async def setup(bot):
+		await voice.channel.edit(user_limit=limit)
+		await ctx.send(f"Vocal user-limit set to `{limit}`.", ephemeral=True)
+
+
+
+async def setup(bot: DiscordBot):
 	await bot.add_cog(PrivateVocal(bot))

@@ -115,6 +115,10 @@ class DataSQL():
     async def update(self, table: str, dict: str, condition: str = None) -> query:
         query = self.__query_update(table, dict, condition)
         return await self.query(query)
+    
+    async def delete(self, table: str, condition: str = '') -> query:
+        query = f"DELETE FROM `{table}` WHERE {condition};"
+        return await self.query(query + ';')
 
     async def increment(self, table: str, target: str, value: int = 1, condition: Union[str, None] = None) -> update:
         await self.update(table, {target: MixedTypes(f"{target} + {value}")}, condition)
@@ -129,8 +133,13 @@ class DataSQL():
     async def count(self, table: str, what: str, condition: str = '') -> select:
         return await self.select(table, f"COUNT({what})", condition)
 
-    async def lookup(self, table: str, target: str, what: str, which: str) -> select:
-        return await self.select(table, target, f"{what} REGEXP '{which}'")
+    async def lookup(self, table: str, target: str, dict: dict) -> select:
+        condition = ''
+        for i, items in enumerate(dict.items()):
+            key, value = items
+            condition += f"`{key}` = {self.__toKindFormat(value)} AND" if i+1 < len(dict) else f"`{key}` = {self.__toKindFormat(value)}"
+
+        return await self.select(table, target, condition)
     
     async def exist(self, table: str, target: str, condition: str = '') -> bool:
         response = await self.count(table, target, condition)

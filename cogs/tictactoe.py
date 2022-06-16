@@ -1,8 +1,8 @@
-# This example requires the 'message_content' privileged intent to function.
+import discord
 
 from typing import List
 from discord.ext import commands
-import discord
+from classes.discordbot import DiscordBot
 
 # Defines a custom button that contains the logic of the game.
 # The ['TicTacToe'] bit is for type hinting purposes to tell your IDE or linter
@@ -123,7 +123,7 @@ class TicTacToe(discord.ui.View):
 class TicTacToeBot(commands.Cog, name='TicTacToe'):
 	"""This is the command that starts the game."""
 
-	def __init__(self, bot: commands.Bot) -> None:
+	def __init__(self, bot: DiscordBot) -> None:
 		self.bot = bot
 	
 	def help_custom(self) -> tuple[str, str, str]:
@@ -139,5 +139,5 @@ class TicTacToeBot(commands.Cog, name='TicTacToe'):
 		await ctx.send('Tic Tac Toe: X goes first', view=TicTacToe())
 
 
-async def setup(bot):
+async def setup(bot: DiscordBot):
 	await bot.add_cog(TicTacToeBot(bot))

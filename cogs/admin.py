@@ -1,6 +1,7 @@
 import discord
 import os
-
+from datetime import datetime
+from classes.discordbot import DiscordBot
 from classes.utilities import load_config ,cogs_manager, reload_views, cogs_directory, root_directory
 
 from discord.ext import commands
@@ -17,10 +18,10 @@ class Admin(commands.Cog, name="admin"):
 			- send_messages
 			- attach_files
 	"""
-	def __init__(self, bot: commands.Bot) -> None:
+	def __init__(self, bot: DiscordBot) -> None:
 		self.bot = bot
-		self.welcome = bot.config["database"]["welcome"]
-		self.prefix = bot.config["database"]["prefix"]
+		self.welcome = self.bot.config["cogs"]["welcome"]
+		self.prefix = self.bot.config["cogs"]["prefix"]
 
 	def help_custom(self) -> tuple[str, str, str]:
 		emoji = '⚙️'
@@ -134,12 +135,7 @@ class Admin(commands.Cog, name="admin"):
 	async def change_guild_prefix(self, ctx, new_prefix):
 		"""Change le préfix du serveur."""
 		try:
-			table = self.bot.config["database"]["prefix"]["table"]
-			exist = await self.bot.database.exist(table, "*", f"guild_id={ctx.guild.id}")
-			if exist:
-				await self.bot.database.update(table, "guild_prefix", new_prefix, f"guild_id={ctx.guild.id}")
-			else:
-				await self.bot.database.insert(table, {"guild_id": ctx.guild.id, "guild_prefix": new_prefix})
+			await self.bot.database.insert_onduplicate(self.prefix["table"], {"guild_id": ctx.guild.id, "guild_prefix": new_prefix})
 
 			self.bot.prefixes[ctx.guild.id] = new_prefix
 			await ctx.send(f":warning: Le préfix a bien été changé en `{new_prefix}`")
@@ -153,17 +149,21 @@ class Admin(commands.Cog, name="admin"):
 	async def setwelcome(self, ctx, is_active):
 		"""Active/désactive l'envoie de messages bienvenue / au revoir."""
 		try:
-			exist = await self.bot.database.exist(self.welcome["table"], "*", f"guild_id={ctx.guild.id}")
-			if exist:
-				await self.bot.database.update(self.welcome["table"], "is_active", is_active, f"guild_id={ctx.guild.id}")
-			else:
-				await self.bot.database.insert(self.welcome["table"], {"guild_id": ctx.guild.id, "is_active": is_active})
+			await self.bot.database.insert_onduplicate(self.welcome["table"], {"guild_id": ctx.guild.id, "is_active": is_active})
 
 			self.welcome[ctx.guild.id] = is_active
 			await ctx.send(f":wave: Les messages de bienvenue / au revoir sont à l'état `{is_active}`\n\n:warning: `0` = **désactivé** `1` = **activé**")
 		except Exception as e:
 			await ctx.send(f"Erreur : {e}")
 
+	@commands.command(name="uptime")
+	@commands.bot_has_permissions(send_messages=True)
+	@commands.is_owner()
+	async def show_uptime(self, ctx: commands.Context):
+		"""Show the bot uptime."""
+		uptime = datetime.now() - self.bot.uptime
+		await ctx.send(f":clock1: <t:{round(self.bot.uptime.timestamp())}:R> ||`{uptime}`||")
 
-async def setup(bot):
+
+async def setup(bot: DiscordBot):
 	await bot.add_cog(Admin(bot))

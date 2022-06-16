@@ -2,14 +2,16 @@ import io
 import time
 import discord
 import matplotlib.pyplot as plt
+import requests
+
 from io import BytesIO
 from datetime import datetime
 from discord.utils import get
 from discord.ext import commands
 from discord import Guild, app_commands
 from PIL import Image, ImageDraw, ImageFont
-import requests
 from views import link
+from classes.discordbot import DiscordBot
 
 def statServer(guild) -> dict:
 	status = {}
@@ -41,7 +43,7 @@ class Info(commands.Cog, name="info"):
 		Require bot permission:
 			- use_external_emojis
 	"""
-	def __init__(self, bot: commands.Bot) -> None:
+	def __init__(self, bot: DiscordBot) -> None:
 		self.bot = bot
 
 	def help_custom(self) -> tuple[str, str, str]:
@@ -178,9 +180,10 @@ class Info(commands.Cog, name="info"):
 
 		embed.add_field(name="But à atteindre : 75 serveurs", value=number_servers + '/75 serveurs soit ≃ ' + str(percent) +'% atteint', inline=False)
 
+		embed.add_field(name="Users", value=len(self.bot.users))
+
 		if interaction.user.id == 405414058775412746:
 			embed.add_field(name="Liste des serveurs :", value='\n'.join(guild.name for guild in self.bot.guilds))
-			embed.add_field(name="Users", value=len(self.bot.users))
 
 		embed.set_footer(text=f"Demandé par : {str(interaction.user.name)} à {time.strftime('%H:%M:%S')}", icon_url=interaction.user.display_avatar.url)
   
@@ -221,5 +224,5 @@ class Info(commands.Cog, name="info"):
 		invite = await interaction.channel.create_invite(max_age=0, max_uses=1, unique=True)
 		await interaction.response.send_message(f"Lien d'invitation : {invite}")
 
-async def setup(bot):
+async def setup(bot: DiscordBot):
 	await bot.add_cog(Info(bot))

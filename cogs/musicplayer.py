@@ -7,7 +7,7 @@ import discord
 import youtube_dl
 from async_timeout import timeout
 from discord.ext import commands
-from discord import app_commands
+from classes.discordbot import DiscordBot
 
 # Silence useless bug reports messages
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -173,7 +173,7 @@ class SongQueue(asyncio.Queue):
 
 
 class VoiceState:
-	def __init__(self, bot: commands.Bot, ctx: commands.Context):
+	def __init__(self, bot: DiscordBot, ctx: commands.Context):
 		self.bot = bot
 		self._ctx = ctx
 
@@ -254,7 +254,7 @@ class VoiceState:
 
 class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=False)):
 	"""Description des commandes du Lecteur de musiques"""
-	def __init__(self, bot: commands.Bot):
+	def __init__(self, bot: DiscordBot):
 		self.bot = bot
 		self.voice_states = {}
 		
@@ -345,7 +345,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 				return await ctx.send('Rien n\'est joué pour le moment.', ephemeral=True)
 
 			if 0 > volume > 100:
-				return await ctx.send('Le volume doit être compris entre 0 et 100%', ephemeral=True)
+				return await ctx.send('Le volume doit être compris entre 0 et 100%')
 
 			ctx.voice_state.volume = volume / 100
 			await ctx.send('Volume du lecteur réglé sur {}%'.format(volume))
@@ -355,7 +355,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 		"""Affiche la chanson en cours de lecture."""
 		if not ctx.voice_state.is_playing:
 			return await ctx.send('Rien n\'est joué pour le moment.', ephemeral=True)
-		await ctx.send(embed=ctx.voice_state.current.create_embed(), ephemeral=True)
+		await ctx.send(embed=ctx.voice_state.current.create_embed())
 
 	@commands.hybrid_command(name='stop')
 	async def _stop(self, ctx: commands.Context):
@@ -376,6 +376,9 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 
 		if not ctx.voice_state.is_playing:
 			return await ctx.send('Je ne joue pas de musique en ce moment...', ephemeral=True)
+
+		if not ctx.voice_state.songs:
+			return await ctx.send('La file d\'attente est vide.', ephemeral=True)
 
 		voter = ctx.message.author
 		if voter == ctx.voice_state.current.requester:
@@ -403,6 +406,9 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 		if not ctx.voice_state.is_playing:
 			return await ctx.send('Je ne joue pas de musique en ce moment...', ephemeral=True)
 
+		if not ctx.voice_state.songs:
+			return await ctx.send('La file d\'attente est vide.', ephemeral=True)
+
 		voter = ctx.message.author
 		if voter == ctx.voice_state.current.requester:
 			await ctx.message.add_reaction('⏭')
@@ -428,7 +434,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 
 		embed = (discord.Embed(description='**{} tracks:**\n\n{}'.format(len(ctx.voice_state.songs), queue))
 				 .set_footer(text='Page actuelle {}/{}'.format(page, pages)))
-		await ctx.send(embed=embed, ephemeral=True)
+		await ctx.send(embed=embed)
 
 	@commands.hybrid_command(name='shuffle')
 	async def _shuffle(self, ctx: commands.Context):
@@ -441,7 +447,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 				return await ctx.send('File d\'attente vide.', ephemeral=True)
 
 			ctx.voice_state.songs.shuffle()
-			await ctx.send('File d\'attente mélangée.', ephemeral=True)
+			await ctx.send('File d\'attente mélangée.')
 
 	@commands.hybrid_command(name='remove')
 	async def _remove(self, ctx: commands.Context, index: int):
@@ -454,7 +460,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 				return await ctx.send('File d\'attente vide.', ephemeral=True)
 
 			ctx.voice_state.songs.remove(index - 1)
-			await ctx.send('Morceau supprimé.', ephemeral=True)
+			await ctx.send('Morceau supprimé.')
 
 	@commands.hybrid_command(name='loop')
 	async def _loop(self, ctx: commands.Context):
@@ -465,7 +471,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 
 		# Inverse boolean value to loop and unloop.
 		ctx.voice_state.loop = not ctx.voice_state.loop
-		await ctx.send('Loop {}.'.format('activé' if ctx.voice_state.loop else 'désactivé'), ephemeral=True)
+		await ctx.send('Loop {}.'.format('activé' if ctx.voice_state.loop else 'désactivé'))
 		
 	@commands.hybrid_command(name='pause')
 	async def _pause(self, ctx:commands.Context):
@@ -475,7 +481,7 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 		if any([ctx.author.guild_permissions.manage_guild, ctx.guild.get_role(907589778734718976) in ctx.author.roles, 'DJ' in role_names, 'admin' in role_names, 'Admins' in role_names, 'Moderators' in role_names]):
 	  
 			ctx.voice_client.pause()
-			await ctx.send('Morceau en pause.', ephemeral=True)
+			await ctx.send('Morceau en pause.')
 
 	@commands.hybrid_command(name='resume')
 	async def _resume(self, ctx:commands.Context):
@@ -497,19 +503,19 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 		if not ctx.voice_state.voice:
 			await ctx.invoke(self._join)
 
-		async with ctx.typing():
-			try:
-				source = await YTDLSource.create_source(ctx, search, loop=self.bot.loop)
-			except YTDLError as e:
-				await ctx.send('Une erreur s\'est produite lors du traitement de cette demande : {}'.format(str(e)), ephemeral=True)
+		# async with ctx.typing():
+		try:
+			source = await YTDLSource.create_source(ctx, search, loop=self.bot.loop)
+		except YTDLError as e:
+			await ctx.send('Une erreur s\'est produite lors du traitement de cette demande : {}'.format(str(e)), ephemeral=True)
+		else:
+			song = Song(source)
+			test = source.duration
+			if "hours" in str(test):
+				await ctx.send('Cette chanson est trop longue. (plus de 1 heure)', ephemeral=True)
 			else:
-				song = Song(source)
-				test = source.duration
-				if "hours" in str(test):
-					await ctx.send('Cette chanson est trop longue. (plus de 1 heure)', ephemeral=True)
-				else:
-					await ctx.voice_state.songs.put(song)
-					await ctx.send('Prochaine musique : {}'.format(str(source)))
+				await ctx.voice_state.songs.put(song)
+				await ctx.send('Prochaine musique : {}'.format(str(source)))
 
 
 	@_join.before_invoke
@@ -523,5 +529,5 @@ class Musicplayer(commands.Cog, name="musicplayer", command_attrs=dict(hidden=Fa
 				await ctx.send('Le Bot est déjà dans un canal vocal.', ephemeral=True)
 
 
-async def setup(bot):
+async def setup(bot: DiscordBot):
 	await bot.add_cog(Musicplayer(bot))

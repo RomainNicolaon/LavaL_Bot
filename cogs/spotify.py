@@ -6,6 +6,7 @@ import dateutil.parser
 from discord.utils import get
 from discord.ext import commands
 from discord import app_commands
+from classes.discordbot import DiscordBot
 
 class Spotify(commands.Cog, name="spotify"):
 	"""
@@ -17,7 +18,7 @@ class Spotify(commands.Cog, name="spotify"):
 		Require bot permission:
 			- use_external_emojis
 	"""
-	def __init__(self, bot: commands.Bot) -> None:
+	def __init__(self, bot: DiscordBot) -> None:
 		self.bot = bot
 
 	def help_custom(self) -> tuple[str, str, str]:
@@ -41,11 +42,11 @@ class Spotify(commands.Cog, name="spotify"):
 				album_image = Image.open(requests.get(activity.album_cover_url, stream=True).raw).convert('RGBA')
 
 				# Fonts
-				title_font = ImageFont.truetype('fonts/theboldfont.ttf', 16)
-				artist_font = ImageFont.truetype('fonts/theboldfont.ttf', 14)
-				album_font = ImageFont.truetype('fonts/theboldfont.ttf', 14)
-				start_duration_font = ImageFont.truetype('fonts/theboldfont.ttf', 12)
-				end_duration_font = ImageFont.truetype('fonts/theboldfont.ttf', 12)
+				title_font = ImageFont.truetype('fonts/ARIALUNI.TTF', 16)
+				artist_font = ImageFont.truetype('fonts/ARIALUNI.TTF', 14)
+				album_font = ImageFont.truetype('fonts/ARIALUNI.TTF', 14)
+				start_duration_font = ImageFont.truetype('fonts/ARIALUNI.TTF', 12)
+				end_duration_font = ImageFont.truetype('fonts/ARIALUNI.TTF', 12)
 
 				# Positions
 				title_text_position = 150, 30
@@ -86,5 +87,5 @@ class Spotify(commands.Cog, name="spotify"):
 		await interaction.response.send_message(f"{user.name} n'écoute pas Spotify.")
 
 
-async def setup(bot):
+async def setup(bot: DiscordBot):
 	await bot.add_cog(Spotify(bot))

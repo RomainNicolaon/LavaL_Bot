@@ -1,23 +1,22 @@
-from datetime import datetime
 import time
+import discord
+import random
+import aiohttp
+import requests
+import json
+
+from datetime import datetime
+from classes.discordbot import DiscordBot
 from PIL import Image, ImageDraw, ImageFont, ImageChops
 from io import BytesIO
 from pytz import timezone
-import discord
-import random
 from discord.ext import commands
 from discord import app_commands
-import aiohttp
-import requests
 from datetime import datetime
-import json
 from serpapi import GoogleSearch
-from riotwatcher import LolWatcher
 from discord.utils import get
-from views.modal import CustomModal
 from lyrics_extractor import SongLyrics
-from pbwrap import Pastebin
-import io
+
 
 class Funcmd(commands.Cog, name="funcmd"):
 	"""
@@ -30,15 +29,14 @@ class Funcmd(commands.Cog, name="funcmd"):
 			- use_external_emojis
 	"""
 
-	def __init__(self, bot: commands.Bot) -> None:
+	def __init__(self, bot: DiscordBot) -> None:
 		self.bot = bot
-		self.lol_profile = bot.config["database"]["lolprofile"]
-		self.song_lyrics_config = bot.config["bot"]["song_lyrics"]
+		self.subconfig_data: dict = self.bot.config["cogs"][self.__cog_name__.lower()]
 
-		self.lol_watcher = bot.config["bot"]["lol_watcher"]["api_key"]
-		self.lyrics_api_key = self.song_lyrics_config["extract_lyrics_api_key"]
-		self.lyrics_api_key2 = self.song_lyrics_config["extract_lyrics_api_key2"]
-		self.pastebin_api = self.song_lyrics_config["pastebin_api_key"]
+		self.song_lyrics_config = self.subconfig_data["song_lyrics"]
+
+		self.lyrics_api_key = self.subconfig_data["song_lyrics"]["extract_lyrics_api_key"]
+		self.lyrics_api_key2 = self.subconfig_data["song_lyrics"]["extract_lyrics_api_key2"]
 
 	def help_custom(self) -> tuple[str, str, str]:
 		emoji = '<a:CatGunner:876156284557221929>'
@@ -542,514 +540,25 @@ class Funcmd(commands.Cog, name="funcmd"):
 		else:
 			await interaction.response.send_message("<a:no_animated:844992804480352257> Tu ne peux utiliser cette commande que dans un channel NSFW !")
 
-	@app_commands.command(name="registerlol", description="Permet d'enregistrer ton profil League of Legends")
-	async def registerlol(self, interaction: discord.Interaction):
-		"""Permet d'enregistrer ton profil League of Legends"""
-		lol_watcher = LolWatcher(self.lol_watcher)
-		async def when_submit(_class: CustomModal, mod_interaction: discord.Interaction):
-			username = _class.values['pseudo']
-			my_region = 'euw1'
-  
-			try:
-				me = lol_watcher.summoner.by_name(my_region, username)
-				name = me['name']
-				exist = await self.bot.database.exist(self.lol_profile["table"], "*", f"discord_id={mod_interaction.user.id}")
-				if exist:
-					# Update
-					await self.bot.database.update(self.lol_profile["table"], "lol_account", name, f"discord_id = {mod_interaction.user.id}")
-				else:
-					# Insert
-					await self.bot.database.insert(self.lol_profile["table"], {"pseudo": mod_interaction.user.name, "discord_id": mod_interaction.user.id, "lol_account": name})
-				await mod_interaction.response.send_message("<a:yes_animated:844992841938894849> Votre profil a bien été enregistré ! Votre nom de compte est maintenant : **"+name+"**")
-			except:
-				raise await mod_interaction.response.send_message("<a:no_animated:844992804480352257> Je n'ai pas trouvé de profil League of Legends correspondant !")
-
-		modal = CustomModal(
-			title="Enregistrement de compte League of Legends",
-			fields={
-				"pseudo": discord.ui.TextInput(
-					label="Pseudo League of Legends",
-					placeholder="Ton pseudo ici...",
-					style=discord.TextStyle.short,
-					required=True,
-					min_length=3
-				)
-			},
-			when_submit=when_submit
-		)
-
-		await interaction.response.send_modal(modal)
-
-	@app_commands.command(name="lolprofile", description="Permet d'enregistrer ton profil League of Legends")
-	@app_commands.describe(username="Mets ton profil League of Legends")
-	async def lolprofil(self, interaction: discord.Interaction, username:str=None):
-		"""Renvoie le profil de League of Legends"""
-		lol_watcher = LolWatcher(self.lol_watcher)
-		response = await self.bot.database.lookup(self.lol_profile["table"], "lol_account", "discord_id", str(interaction.user.id))
-		my_region = 'euw1'
-		try:
-			if not username:
-				username = response[0][0]
-		except:
-			await interaction.response.send_message("<a:no_animated:844992804480352257> Vous n'avez pas encore enregistré de compte League of Legends !")
-			return
-
-		try:
-			me = lol_watcher.summoner.by_name(my_region, username)
-
-			# Get the summoner's name, level, and profile picture URL
-			name = me['name']
-			summoner_lvl = me['summonerLevel']
-			profile_icon_id = me["profileIconId"]
-			version = 'https://ddragon.leagueoflegends.com/api/versions.json'
-			r = requests.get(version)
-			link = r.json()
-			link = json.dumps(link)
-			python_obj = json.loads(link)
-			latest_version = python_obj[0]
-			profil_picture_url = f'https://ddragon.leagueoflegends.com/cdn/{latest_version}/img/profileicon/{profile_icon_id}.png'
-	
-			# Get the summoner's ranked stats
-			my_ranked_stats = lol_watcher.league.by_summoner(my_region, me['id'])
-	
-			embed = discord.Embed(title="Profil League of Legends", color=0xE01DE3)
-			embed.add_field(name="Nom", value=name, inline=False)
-			embed.add_field(name="Niveau", value=summoner_lvl, inline=False)
-
-			try:
-				for i in range(len(my_ranked_stats)):
-					# Solo/Duo
-					if my_ranked_stats[i]['queueType'] == 'RANKED_SOLO_5x5':
-						queueType0 = my_ranked_stats[i]['queueType']
-						tier0 = my_ranked_stats[i]['tier']
-						rank0 = my_ranked_stats[i]['rank']
-						lp0 = my_ranked_stats[i]['leaguePoints']
-						wins0 = my_ranked_stats[i]['wins']
-						losses0 = my_ranked_stats[i]['losses']
-					# Flex
-					if my_ranked_stats[i]['queueType'] == 'RANKED_FLEX_SR':
-						queueType1 = my_ranked_stats[i]['queueType']
-						tier1 = my_ranked_stats[i]['tier']
-						rank1 = my_ranked_stats[i]['rank']
-						lp1 = my_ranked_stats[i]['leaguePoints']
-						wins1 = my_ranked_stats[i]['wins']
-						losses1 = my_ranked_stats[i]['losses']
-
-				embed.add_field(name=queueType0, value=f"{tier0} {rank0} {lp0} LP", inline=False)
-				embed.add_field(name="Victoires", value=wins0, inline=True)
-				embed.add_field(name="Défaites", value=losses0, inline=True)
-
-				embed.add_field(name=queueType1, value=f"{tier1} {rank1} {lp1} LP", inline=False)
-				embed.add_field(name="Victoires", value=wins1, inline=True)
-				embed.add_field(name="Défaites", value=losses1, inline=True)
-
-				embed.set_thumbnail(url=profil_picture_url)
-				await interaction.response.send_message(embed=embed)
-
-			except:
-				await interaction.response.send_message("<a:no_animated:844992804480352257> Vous n'avez pas fait de parties en ranked.")
-		except:
-			await interaction.response.send_message("<a:no_animated:844992804480352257> Je n'ai pas trouvé de compte League of Legends correspondant. Essayez d'enregistrer votre compte League of Legends en utilisant `?registerlol` ou `?rlol` et réessayez.")
-
 	@app_commands.command(name="lyrics", description="Affichez les lyrics de votre chanson")
 	async def lyrics(self, interaction: discord.Interaction, song:str):
 		"""Affichez les lyrics de votre chanson"""
+		await interaction.response.defer()
 		try:
 			extract_lyrics = SongLyrics(self.lyrics_api_key, self.lyrics_api_key2)
 
 			extract_song = extract_lyrics.get_lyrics(song)
 			final_song = extract_song['lyrics']
+			final_song = final_song.split("\n")
+			paginator = commands.Paginator()
+			for i in final_song:
+				paginator.add_line(i)
 
-			pb = Pastebin(self.pastebin_api)
-			file = pb.create_paste(final_song, 0, f'Lyrics de {song}', None, None)
-			embed = discord.Embed(title="Lyrics", color=0xE01DE3)
-			embed.add_field(name=f"Lyrics de : {song}".upper(), value=f"<{file}>", inline=False)
-			embed.set_thumbnail(url="https://media.istockphoto.com/vectors/music-note-icon-vector-illustration-vector-id1175435360?k=20&m=1175435360&s=612x612&w=0&h=1yoTgUwobvdFlNxUQtB7_NnWOUD83XOMZHvxUzkOJJs=")
-			await interaction.response.send_message(embed=embed)
+			for page in paginator.pages:
+				await interaction.followup.send(content=page)
 		except:
-			await interaction.response.send_message("<a:no_animated:844992804480352257> Je n'ai pas trouvé de chanson correspondante.")
+			await interaction.followup.send("<a:no_animated:844992804480352257> Je n'ai pas trouvé de musique correspondante.")
 
-	@app_commands.command(name="lolrecentgames", description="Affichez les stats de votre dernière partie League of Legends")
-	async def lolrecentgames(self, interaction: discord.Interaction, username:str=None):
-		"""Affichez les stats de votre dernière partie League of Legends"""
-		lol_watcher = LolWatcher(self.lol_watcher)
-		response = await self.bot.database.lookup(self.lol_profile["table"], "lol_account", "discord_id", str(interaction.user.id))
-		my_region = 'euw1'
-		try:
-			if not username:
-				username = response[0][0]
-		except:
-			await interaction.response.send_message("<a:no_animated:844992804480352257> Vous n'avez pas encore enregistré de compte League of Legends !")
-			return
 
-		me = lol_watcher.summoner.by_name(my_region, username)
-		user_puuid = me['puuid']
-		matches = lol_watcher.match.matchlist_by_puuid(my_region, user_puuid)[0]
-		match = lol_watcher.match.by_id(my_region, matches)
-		infos = match['info']
-		participants = match['info']['participants']
-		teams = match['info']['teams']
-		version = 'https://ddragon.leagueoflegends.com/api/versions.json'
-		r = requests.get(version)
-		link = r.json()
-		link = json.dumps(link)
-		python_obj = json.loads(link)
-		latest_version = python_obj[0]
-
-		participants_name = []
-		participants_level = []
-		participants_kda = []
-		participants_champion = []
-		tower_destroyed = []
-		inhibiteur_destroyed = []
-		dragon_killed = []
-		riftherald_killed = []
-		baron_killed = []
-		champions_killed = []
-		participants_cs = []
-		# participants_items = []
-
-		def circle(pfp,size = (60,60)):
-			pfp = pfp.resize(size, Image.ANTIALIAS).convert("RGBA")
-			bigsize = (pfp.size[0] * 3, pfp.size[1] * 3)
-			mask = Image.new('L', bigsize, 0)
-			draw = ImageDraw.Draw(mask) 
-			draw.ellipse((0, 0) + bigsize, fill=255)
-			mask = mask.resize(pfp.size, Image.ANTIALIAS)
-			mask = ImageChops.darker(mask, pfp.split()[-1])
-			pfp.putalpha(mask)
-			return pfp
-
-		for participant in participants:
-			participants_name.append(participant['summonerName'])
-			participants_level.append(participant['champLevel'])
-			if participant['deaths'] != 0:
-				kda = (participant['kills'] + participant['assists']) / participant['deaths']
-				kda = round(kda, 2)
-			else:
-				kda = "Perfect"
-			participants_kda.append(str(kda))
-			participants_champion.append(participant['championName'])
-			# participants_items.append((participant['item0']))
-			participants_cs.append(str(participant['totalMinionsKilled'] + participant['neutralMinionsKilled']))
-		for team in teams:
-			tower_destroyed.append(team['objectives']['tower']['kills'])
-			inhibiteur_destroyed.append(team['objectives']['inhibitor']['kills'])
-			dragon_killed.append(team['objectives']['dragon']['kills'])
-			riftherald_killed.append(team['objectives']['riftHerald']['kills'])
-			baron_killed.append(team['objectives']['baron']['kills'])
-			champions_killed.append(team['objectives']['champion']['kills'])
-
-		match_background_image = Image.open('img/lol_template.png')
-		match_background_image = match_background_image.convert('RGB')
-		title_font = ImageFont.truetype('fonts/Friz_Quadrata_Bold.otf', size=60)
-		basic_font = ImageFont.truetype('fonts/Friz_Quadrata_Regular.ttf', size=50)
-		draw = ImageDraw.Draw(match_background_image, 'RGBA')
-		# global draw
-		draw.rectangle(((0, 0), (match_background_image.size[0], match_background_image.size[1])), fill=(187, 187, 187, 80))
-		draw.rectangle((100, 100, 1800, 980), fill = (129, 172, 255, 63), outline = (255, 255, 255), width = 5)
-		# blue draw
-		draw.rectangle((100, 100, 1800, 500), fill = (58, 103, 231, 110), outline = (255, 255, 255), width = 5)
-		# middle draw
-		draw.rectangle((100, 500, 1800, 580), fill = (187, 187, 187, 160), outline = (255, 255, 255), width = 5)
-		# red draw
-		draw.rectangle((100, 580, 1800, 980), fill = (214, 9, 9, 110), outline = (255, 255, 255), width = 5)
-		# lines draw
-		draw.line((100, 180, 1800, 180), fill = (255, 255, 255), width = 5)
-		draw.line((100, 260, 1800, 260), fill = (255, 255, 255), width = 5)
-		draw.line((100, 340, 1800, 340), fill = (255, 255, 255), width = 5)
-		draw.line((100, 420, 1800, 420), fill = (255, 255, 255), width = 5)
-		draw.line((100, 500, 1800, 500), fill = (255, 255, 255), width = 5)
-		draw.line((100, 580, 1800, 580), fill = (255, 255, 255), width = 5)
-		draw.line((100, 660, 1800, 660), fill = (255, 255, 255), width = 5)
-		draw.line((100, 740, 1800, 740), fill = (255, 255, 255), width = 5)
-		draw.line((100, 820, 1800, 820), fill = (255, 255, 255), width = 5)
-		draw.line((100, 900, 1800, 900), fill = (255, 255, 255), width = 5)
-
-		# Blue team
-		baron_b = Image.open('img/icon-baron-b.png').convert('RGBA').resize((50, 50))
-		match_background_image.paste(baron_b, (140, 515), mask=baron_b)
-		draw.text((205, 520), str(baron_killed[0]), (255, 255, 255, 110), font=basic_font)
-
-		dragon_b = Image.open('img/icon-dragon-b.png').convert('RGBA').resize((50, 50))
-		match_background_image.paste(dragon_b, (260, 515), mask=dragon_b)
-		draw.text((325, 520), str(dragon_killed[0]), (255, 255, 255, 110), font=basic_font)
-		tower_b = Image.open('img/icon-tower-b.png').convert('RGBA').resize((50, 50))
-		match_background_image.paste(tower_b, (380, 515), mask=tower_b)
-		draw.text((455, 520), str(tower_destroyed[0]), (255, 255, 255, 110), font=basic_font)
-
-		game_mode = infos['gameMode']
-		draw.text((1300, 1005), "Mode de Jeu : " + str(game_mode), (255, 255, 255, 110), font=basic_font)
-		draw.text((110, 10), "Victoire", (58, 103, 231, 110), font=title_font)
-		draw.text((110, 980), "Défaite", (236, 16, 16, 110), font=title_font)
-		draw.text((680, 10), "K/D/A", (255, 255, 255, 110), font=title_font)
-		draw.text((980, 10), "CS", (255, 255, 255, 110), font=title_font)
-		draw.text((1150, 10), "Items", (255, 255, 255, 110), font=title_font)
-
-		# Red team
-		baron_r = Image.open('img/icon-baron-r.png').convert('RGBA').resize((50, 50))
-		match_background_image.paste(baron_r, (1400, 515), mask=baron_r)
-		draw.text((1475, 520), str(baron_killed[1]), (255, 255, 255, 110), font=basic_font)
-
-		dragon_r = Image.open('img/icon-dragon-r.png').convert('RGBA').resize((50, 50))
-		match_background_image.paste(dragon_r, (1520, 515), mask=dragon_r)
-		draw.text((1595, 520), str(dragon_killed[1]), (255, 255, 255, 110), font=basic_font)
-
-		tower_r = Image.open('img/icon-tower-r.png').convert('RGBA').resize((50, 50))
-		match_background_image.paste(tower_r, (1640, 515), mask=tower_r)
-		draw.text((1715, 520), str(tower_destroyed[1]), (255, 255, 255, 110), font=basic_font)
-
-		# Players Names
-		draw.text((200, 120), participants_name[0], font=basic_font, fill=(255, 255, 255))
-		draw.text((200, 200), participants_name[1], font=basic_font, fill=(255, 255, 255))
-		draw.text((200, 280), participants_name[2], font=basic_font, fill=(255, 255, 255))
-		draw.text((200, 360), participants_name[3], font=basic_font, fill=(255, 255, 255))
-		draw.text((200, 440), participants_name[4], font=basic_font, fill=(255, 255, 255))
-		draw.text((200, 600), participants_name[5], font=basic_font, fill=(255, 255, 255))
-		draw.text((200, 680), participants_name[6], font=basic_font, fill=(255, 255, 255))
-		draw.text((200, 760), participants_name[7], font=basic_font, fill=(255, 255, 255))
-		draw.text((200, 840), participants_name[8], font=basic_font, fill=(255, 255, 255))
-		draw.text((200, 920), participants_name[9], font=basic_font, fill=(255, 255, 255))
-
-		# Players Icons
-		icons = []
-		for participant in participants_champion:
-			response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/{latest_version}/img/champion/{participant}.png")
-			player_icon_url = io.BytesIO(response.content)
-			player_icon = (Image.open(player_icon_url).convert('RGBA').resize((60, 60)))
-			icons.append(circle(player_icon))
-
-		match_background_image.paste(icons[0], (120, 115), mask=icons[0])
-		match_background_image.paste(icons[1], (120, 190), mask=icons[1])
-		match_background_image.paste(icons[2], (120, 270), mask=icons[2])
-		match_background_image.paste(icons[3], (120, 350), mask=icons[3])
-		match_background_image.paste(icons[4], (120, 430), mask=icons[4])
-		match_background_image.paste(icons[5], (120, 590), mask=icons[5])
-		match_background_image.paste(icons[6], (120, 670), mask=icons[6])
-		match_background_image.paste(icons[7], (120, 750), mask=icons[7])
-		match_background_image.paste(icons[8], (120, 830), mask=icons[8])
-		match_background_image.paste(icons[9], (120, 910), mask=icons[9])
-
-		# Players KDA
-		draw.text((770, 160), participants_kda[0], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((770, 240), participants_kda[1], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((770, 320), participants_kda[2], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((770, 400), participants_kda[3], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((770, 480), participants_kda[4], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((770, 640), participants_kda[5], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((770, 720), participants_kda[6], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((770, 800), participants_kda[7], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((770, 880), participants_kda[8], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((770, 960), participants_kda[0], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-
-		# Players CS
-		draw.text((1025, 160), participants_cs[0], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((1025, 240), participants_cs[1], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((1025, 320), participants_cs[2], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((1025, 400), participants_cs[3], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((1025, 480), participants_cs[4], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((1025, 640), participants_cs[5], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((1025, 720), participants_cs[6], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((1025, 800), participants_cs[7], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((1025, 880), participants_cs[8], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-		draw.text((1025, 960), participants_cs[0], font=basic_font, fill=(255, 255, 255, 110), anchor='ms')
-
-		# Players Items
-		# for i in range(0, 9):
-		# 	if participants_items[i][0] != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/{latest_version}/img/item/{participants_items[i][0]}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((30, 30)))
-		# 		match_background_image.paste(item_icon, (1300, (i * 40) + 115), mask=item_icon)
-		# 	if participants_items[i][1] != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/{latest_version}/img/item/{participants_items[i][1]}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((30, 30)))
-		# 		match_background_image.paste(item_icon, (1350, (i * 40) + 115), mask=item_icon)
-		# 	if participants_items[i][2] != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/{latest_version}/img/item/{participants_items[i][2]}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((30, 30)))
-		# 		match_background_image.paste(item_icon, (1390, (i * 40) + 115), mask=item_icon)
-		# 	if participants_items[i][3] != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/{latest_version}/img/item/{participants_items[i][3]}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((30, 30)))
-		# 		match_background_image.paste(item_icon, (1440, (i * 40) + 115), mask=item_icon)
-		# 	if participants_items[i][4] != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/{latest_version}/img/item/{participants_items[i][4]}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((30, 30)))
-		# 		match_background_image.paste(item_icon, (1490, (i * 40) + 115), mask=item_icon)
-		# 	if participants_items[i][5] != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/{latest_version}/img/item/{participants_items[i][5]}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((30, 30)))
-		# 		match_background_image.paste(item_icon, (1500, (i * 40) + 115), mask=item_icon)
-
-		# items_icons0 = []
-		# for item in participants_items0:
-		# 	if item != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/12.9.1/img/item/{item}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((60, 60)))
-		# 		items_icons0.append(item_icon)
-		# 	else:
-		# 		item_icon = (Image.new(size=(60, 60), mode="RGBA"))
-		# 		items_icons0.append(item_icon)
-
-		# match_background_image.paste(items_icons0[0], (1150, 110), mask=items_icons0[0])
-		# match_background_image.paste(items_icons0[1], (1150, 190), mask=items_icons0[1])
-		# match_background_image.paste(items_icons0[2], (1150, 270), mask=items_icons0[2])
-		# match_background_image.paste(items_icons0[3], (1150, 350), mask=items_icons0[3])
-		# match_background_image.paste(items_icons0[4], (1150, 430), mask=items_icons0[4])
-		# match_background_image.paste(items_icons0[5], (1150, 590), mask=items_icons0[5])
-		# match_background_image.paste(items_icons0[6], (1150, 670), mask=items_icons0[6])
-		# match_background_image.paste(items_icons0[7], (1150, 750), mask=items_icons0[7])
-		# match_background_image.paste(items_icons0[8], (1150, 830), mask=items_icons0[8])
-		# match_background_image.paste(items_icons0[9], (1150, 910), mask=items_icons0[9])
-
-		# items_icons1 = []
-		# for item in participants_items1:
-		# 	if item != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/12.9.1/img/item/{item}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((60, 60)))
-		# 		items_icons1.append(item_icon)
-		# 	else:
-		# 		item_icon = (Image.new(size=(60, 60), mode="RGBA"))
-		# 		items_icons1.append(item_icon)
-
-		# match_background_image.paste(items_icons1[0], (1220, 110), mask=items_icons1[0])
-		# match_background_image.paste(items_icons1[1], (1220, 190), mask=items_icons1[1])
-		# match_background_image.paste(items_icons1[2], (1220, 270), mask=items_icons1[2])
-		# match_background_image.paste(items_icons1[3], (1220, 350), mask=items_icons1[3])
-		# match_background_image.paste(items_icons1[4], (1220, 430), mask=items_icons1[4])
-		# match_background_image.paste(items_icons1[5], (1220, 590), mask=items_icons1[5])
-		# match_background_image.paste(items_icons1[6], (1220, 670), mask=items_icons1[6])
-		# match_background_image.paste(items_icons1[7], (1220, 750), mask=items_icons1[7])
-		# match_background_image.paste(items_icons1[8], (1220, 830), mask=items_icons1[8])
-		# match_background_image.paste(items_icons1[9], (1220, 910), mask=items_icons1[9])
-
-		# items_icons2 = []
-		# for item in participants_items2:
-		# 	if item != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/12.9.1/img/item/{item}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((60, 60)))
-		# 		items_icons2.append(item_icon)
-		# 	else:
-		# 		item_icon = (Image.new(size=(60, 60), mode="RGBA"))
-		# 		items_icons2.append(item_icon)
-
-		# match_background_image.paste(items_icons2[0], (1290, 110), mask=items_icons2[0])
-		# match_background_image.paste(items_icons2[1], (1290, 190), mask=items_icons2[1])
-		# match_background_image.paste(items_icons2[2], (1290, 270), mask=items_icons2[2])
-		# match_background_image.paste(items_icons2[3], (1290, 350), mask=items_icons2[3])
-		# match_background_image.paste(items_icons2[4], (1290, 430), mask=items_icons2[4])
-		# match_background_image.paste(items_icons2[5], (1290, 590), mask=items_icons2[5])
-		# match_background_image.paste(items_icons2[6], (1290, 670), mask=items_icons2[6])
-		# match_background_image.paste(items_icons2[7], (1290, 750), mask=items_icons2[7])
-		# match_background_image.paste(items_icons2[8], (1290, 830), mask=items_icons2[8])
-		# match_background_image.paste(items_icons2[9], (1290, 910), mask=items_icons2[9])
-
-		# items_icons3 = []
-		# for item in participants_items3:
-		# 	if item != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/12.9.1/img/item/{item}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((60, 60)))
-		# 		items_icons3.append(item_icon)
-		# 	else:
-		# 		item_icon = (Image.new(size=(60, 60), mode="RGBA"))
-		# 		items_icons3.append(item_icon)
-
-		# match_background_image.paste(items_icons3[0], (1360, 110), mask=items_icons3[0])
-		# match_background_image.paste(items_icons3[1], (1360, 190), mask=items_icons3[1])
-		# match_background_image.paste(items_icons3[2], (1360, 270), mask=items_icons3[2])
-		# match_background_image.paste(items_icons3[3], (1360, 350), mask=items_icons3[3])
-		# match_background_image.paste(items_icons3[4], (1360, 430), mask=items_icons3[4])
-		# match_background_image.paste(items_icons3[5], (1360, 590), mask=items_icons3[5])
-		# match_background_image.paste(items_icons3[6], (1360, 670), mask=items_icons3[6])
-		# match_background_image.paste(items_icons3[7], (1360, 750), mask=items_icons3[7])
-		# match_background_image.paste(items_icons3[8], (1360, 830), mask=items_icons3[8])
-		# match_background_image.paste(items_icons3[9], (1360, 910), mask=items_icons3[9])
-
-		# items_icons4 = []
-		# for item in participants_items4:
-		# 	if item != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/12.9.1/img/item/{item}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((60, 60)))
-		# 		items_icons4.append(item_icon)
-		# 	else:
-		# 		item_icon = (Image.new(size=(60, 60), mode="RGBA"))
-		# 		items_icons4.append(item_icon)
-
-		# match_background_image.paste(items_icons4[0], (1430, 115), mask=items_icons4[0])
-		# match_background_image.paste(items_icons4[1], (1430, 190), mask=items_icons4[1])
-		# match_background_image.paste(items_icons4[2], (1430, 270), mask=items_icons4[2])
-		# match_background_image.paste(items_icons4[3], (1430, 350), mask=items_icons4[3])
-		# match_background_image.paste(items_icons4[4], (1430, 430), mask=items_icons4[4])
-		# match_background_image.paste(items_icons4[5], (1430, 590), mask=items_icons4[5])
-		# match_background_image.paste(items_icons4[6], (1430, 670), mask=items_icons4[6])
-		# match_background_image.paste(items_icons4[7], (1430, 750), mask=items_icons4[7])
-		# match_background_image.paste(items_icons4[8], (1430, 830), mask=items_icons4[8])
-		# match_background_image.paste(items_icons4[9], (1430, 910), mask=items_icons4[9])
-
-		# items_icons5 = []
-		# for item in participants_items5:
-		# 	if item != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/12.9.1/img/item/{item}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((60, 60)))
-		# 		items_icons5.append(item_icon)
-		# 	else:
-		# 		item_icon = (Image.new(size=(60, 60), mode="RGBA"))
-		# 		items_icons5.append(item_icon)
-
-		# match_background_image.paste(items_icons5[0], (1500, 115), mask=items_icons5[0])
-		# match_background_image.paste(items_icons5[1], (1500, 190), mask=items_icons5[1])
-		# match_background_image.paste(items_icons5[2], (1500, 270), mask=items_icons5[2])
-		# match_background_image.paste(items_icons5[3], (1500, 350), mask=items_icons5[3])
-		# match_background_image.paste(items_icons5[4], (1500, 430), mask=items_icons5[4])
-		# match_background_image.paste(items_icons5[5], (1500, 590), mask=items_icons5[5])
-		# match_background_image.paste(items_icons5[6], (1500, 670), mask=items_icons5[6])
-		# match_background_image.paste(items_icons5[7], (1500, 750), mask=items_icons5[7])
-		# match_background_image.paste(items_icons5[8], (1500, 830), mask=items_icons5[8])
-		# match_background_image.paste(items_icons5[9], (1500, 910), mask=items_icons5[9])
-
-		# items_icons6 = []
-		# for item in participants_items6:
-		# 	if item != 0:
-		# 		response = requests.get(f"http://ddragon.leagueoflegends.com/cdn/12.9.1/img/item/{item}.png")
-		# 		item_icon_url = io.BytesIO(response.content)
-		# 		item_icon = (Image.open(item_icon_url).convert('RGBA').resize((60, 60)))
-		# 		items_icons6.append(item_icon)
-		# 	else:
-		# 		item_icon = (Image.new(size=(60, 60), mode="RGBA"))
-		# 		items_icons6.append(item_icon)
-
-		# match_background_image.paste(items_icons6[0], (1570, 115), mask=items_icons6[0])
-		# match_background_image.paste(items_icons6[1], (1570, 190), mask=items_icons6[1])
-		# match_background_image.paste(items_icons6[2], (1570, 270), mask=items_icons6[2])
-		# match_background_image.paste(items_icons6[3], (1570, 350), mask=items_icons6[3])
-		# match_background_image.paste(items_icons6[4], (1570, 430), mask=items_icons6[4])
-		# match_background_image.paste(items_icons6[5], (1570, 590), mask=items_icons6[5])
-		# match_background_image.paste(items_icons6[6], (1570, 670), mask=items_icons6[6])
-		# match_background_image.paste(items_icons6[7], (1570, 750), mask=items_icons6[7])
-		# match_background_image.paste(items_icons6[8], (1570, 830), mask=items_icons6[8])
-		# match_background_image.paste(items_icons6[9], (1570, 910), mask=items_icons6[9])
-
-		# print(f"{participants_items0}")
-		
-		# match_background_image.show()
-		with BytesIO() as img_bin:
-			match_background_image.save(img_bin, format="PNG")
-			img_bin.seek(0)
-			file = discord.File(img_bin, "img/lol.png")
-		await interaction.response.defer()
-		await interaction.edit_original_message(attachments=[file])
- 
-async def setup(bot):
+async def setup(bot: DiscordBot):
 	await bot.add_cog(Funcmd(bot))

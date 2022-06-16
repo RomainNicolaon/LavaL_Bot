@@ -2,6 +2,7 @@ import discord
 import time
 from discord.ext import commands
 from discord import app_commands
+from classes.discordbot import DiscordBot
 
 class Random(commands.Cog, name="random"):
 	"""
@@ -14,7 +15,7 @@ class Random(commands.Cog, name="random"):
 		- use_external_emojis
 	"""
 
-	def __init__(self, bot: commands.Bot) -> None:
+	def __init__(self, bot: DiscordBot) -> None:
 		self.bot = bot
 
 	def help_custom(self) -> tuple[str, str, str]:
@@ -40,5 +41,5 @@ class Random(commands.Cog, name="random"):
 
 		await interaction.response.send_message(embed=embed)
    
-async def setup(bot):
+async def setup(bot: DiscordBot):
 	await bot.add_cog(Random(bot))

@@ -1,5 +1,5 @@
 import time
-
+from classes.discordbot import DiscordBot
 from discord.ext import commands
 from discord import app_commands
 from discord.app_commands import Choice
@@ -15,7 +15,7 @@ class Basic(commands.Cog, name="basic"):
 		Require bot permission:
 			- send_messages
 	"""
-	def __init__(self, bot: commands.Bot) -> None:
+	def __init__(self, bot: DiscordBot) -> None:
 		self.bot = bot
 
 	def help_custom(self) -> tuple[str, str, str]:
@@ -50,5 +50,5 @@ class Basic(commands.Cog, name="basic"):
 		await interaction.channel.purge(limit=11)
 
 
-async def setup(bot):
+async def setup(bot: DiscordBot):
 	await bot.add_cog(Basic(bot))
