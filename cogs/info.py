@@ -183,7 +183,7 @@ class Info(commands.Cog, name="info"):
 		embed.add_field(name="Users", value=len(self.bot.users))
 
 		if interaction.user.id == 405414058775412746:
-			embed.add_field(name="Liste des serveurs :", value='\n'.join(guild.name for guild in self.bot.guilds))
+			embed.add_field(name="Liste des serveurs :", value='\n'.join(guild.name + ' | Total Of Users : ' + str(guild.member_count) for guild in self.bot.guilds), inline=False)
 
 		embed.set_footer(text=f"Demandé par : {str(interaction.user.name)} à {time.strftime('%H:%M:%S')}", icon_url=interaction.user.display_avatar.url)
   

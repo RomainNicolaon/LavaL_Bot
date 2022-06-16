@@ -13,17 +13,17 @@ class Welcome(commands.Cog, name="welcome", command_attrs=dict(hidden=False)):
 		guild = member.guild
 		response = await self.bot.database.lookup(self.subconfig_data["table"], "is_active", {"guild_id": str(member.guild.id)})
 		if response and response[0][0]:
-			if guild.id == 441962473583804416:
-				if guild.system_channel:
+			if guild.system_channel:
+				if guild.id == 441962473583804416:
 					embed = discord.Embed(color=0x4a3d9a)
 					embed.add_field(name="Bienvenue", value=f"**<@!{member.id}>** vient de rejoindre **{member.guild.name}**", inline=False)
 					embed.set_thumbnail(url="https://c.tenor.com/PhhN-3LjE3AAAAAd/gatto-cibo.gif")
 					await guild.system_channel.send(embed=embed)
-			elif guild.system_channel:
-				embed = discord.Embed(color=0x4a3d9a)
-				embed.add_field(name="Bienvenue", value=f"**<@!{member.id}>** vient de rejoindre **{member.guild.name}**", inline=False)
-				embed.set_thumbnail(url="https://media.tenor.com/images/d139e96072bae377be522258f7128881/tenor.gif")
-				await guild.system_channel.send(embed=embed)
+				else:
+					embed = discord.Embed(color=0x4a3d9a)
+					embed.add_field(name="Bienvenue", value=f"**<@!{member.id}>** vient de rejoindre **{member.guild.name}**", inline=False)
+					embed.set_thumbnail(url="https://media.tenor.com/images/d139e96072bae377be522258f7128881/tenor.gif")
+					await guild.system_channel.send(embed=embed)
 		if not response:
 			if guild.system_channel:
 				embed = discord.Embed(color=0x4a3d9a)
