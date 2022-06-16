@@ -12,6 +12,7 @@ from discord import Guild, app_commands
 from PIL import Image, ImageDraw, ImageFont
 from views import link
 from classes.discordbot import DiscordBot
+from classes.ansi import Format as fmt, Foreground as fg, Background as bg
 
 def statServer(guild) -> dict:
 	status = {}
@@ -171,23 +172,30 @@ class Info(commands.Cog, name="info"):
   
 	@app_commands.command(name="numbersofservers", description="Affiche la liste serveurs où LavaL Bot est")
 	async def nbservers(self, interaction: discord.Interaction):
+		await interaction.response.defer()
 		"""Affiche la liste ainsi que le nombre de serveurs où LavaL Bot est"""
 		number_servers = str(len(self.bot.guilds))
 		int_number_servers = int(len(self.bot.guilds))
 		percent = int_number_servers*100/75
 		percent = round(percent, 1)
-		embed = discord.Embed(title=f"Nom de tout les servers où {self.bot.user.name} est", description=f"Actuellement {self.bot.user.name} est sur **" + number_servers + "** serveurs", colour=discord.Colour(0xFA8072))
+
+		embed = discord.Embed(title=f"Objectif de serveurs de {self.bot.user.name}", description=f"Actuellement {self.bot.user.name} est sur **" + number_servers + "** serveurs", colour=discord.Colour(0xFA8072))
 
 		embed.add_field(name="But à atteindre : 75 serveurs", value=number_servers + '/75 serveurs soit ≃ ' + str(percent) +'% atteint', inline=False)
 
-		embed.add_field(name="Users", value=len(self.bot.users))
-
-		if interaction.user.id == 405414058775412746:
-			embed.add_field(name="Liste des serveurs :", value='\n'.join(guild.name + ' | Total Of Users : ' + str(guild.member_count) for guild in self.bot.guilds), inline=False)
+		embed.add_field(name=f"Utilisateurs de {self.bot.user.name}", value=len(self.bot.users))
 
 		embed.set_footer(text=f"Demandé par : {str(interaction.user.name)} à {time.strftime('%H:%M:%S')}", icon_url=interaction.user.display_avatar.url)
+
+		await interaction.followup.send(embed=embed)
   
-		await interaction.response.send_message(embed=embed)
+		paginator = commands.Paginator(prefix="```ansi", suffix="```")
+		for guild in self.bot.guilds:
+			paginator.add_line(f"{fg.RED + fmt.BOLD} Name {fmt.RESET}= {fg.GREEN + fmt.BOLD}{guild.name}{fmt.RESET} |{fg.RED + fmt.BOLD} Total Of Users {fmt.RESET}= {fg.GREEN + fmt.BOLD}{guild.member_count}{fmt.RESET} | {fg.RED + fmt.BOLD} ID {fmt.RESET}= {fg.GREEN + fmt.BOLD}{guild.id}{fmt.RESET}")
+
+		if interaction.user.id == 405414058775412746:
+			for page in paginator.pages:
+				await interaction.followup.send(content=page)
 
 	@app_commands.command(name="server", description="Donne des informations sur le serveur")
 	async def server(self, interaction: discord.Interaction):
