@@ -7,3 +7,6 @@ auth/token.dat
 __pycache__/bot.cpython-39.pyc
 config/bot.json
 *.pyc
+config/bot.json
+config/cogs.json
+config/database.json
