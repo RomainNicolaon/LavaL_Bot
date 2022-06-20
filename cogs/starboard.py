@@ -132,6 +132,9 @@ class Starboard(commands.Cog, name="starboard"):
 			if not starboard_channel:
 				return
 
+			if starboard_channel.id == payload.channel_id:
+				return
+
 			n_star = reaction.count
 			star_emoji =  self.__star_emoji_upgrade(n_star)
 

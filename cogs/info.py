@@ -1,3 +1,4 @@
+from email import utils
 import io
 import time
 import discord
@@ -8,7 +9,7 @@ from io import BytesIO
 from datetime import datetime
 from discord.utils import get
 from discord.ext import commands
-from discord import Guild, app_commands
+from discord import Guild, Permissions, app_commands
 from PIL import Image, ImageDraw, ImageFont
 from views import link
 from classes.discordbot import DiscordBot
@@ -191,13 +192,14 @@ class Info(commands.Cog, name="info"):
   
 		paginator = commands.Paginator(prefix="```ansi", suffix="```")
 		for guild in self.bot.guilds:
-			paginator.add_line(f"{fg.RED + fmt.BOLD} Name {fmt.RESET}= {fg.GREEN + fmt.BOLD}{guild.name}{fmt.RESET} |{fg.RED + fmt.BOLD} Total Of Users {fmt.RESET}= {fg.GREEN + fmt.BOLD}{guild.member_count}{fmt.RESET} | {fg.RED + fmt.BOLD} ID {fmt.RESET}= {fg.GREEN + fmt.BOLD}{guild.id}{fmt.RESET}")
+			paginator.add_line(f"{fg.RED + fmt.BOLD}Name{fmt.RESET}={fg.GREEN + fmt.BOLD}{guild.name}{fmt.RESET} |{fg.RED + fmt.BOLD} Total Of Users{fmt.RESET}={fg.GREEN + fmt.BOLD}{guild.member_count}{fmt.RESET} |{fg.RED + fmt.BOLD} ID{fmt.RESET}={fg.GREEN + fmt.BOLD}{guild.id}{fmt.RESET} |{fg.RED + fmt.BOLD} Owner{fmt.RESET}={fg.GREEN + fmt.BOLD}{guild.owner}{fmt.RESET} |{fg.RED + fmt.BOLD} Is Admin{fmt.RESET}={fg.GREEN + fmt.BOLD}{[channel.permissions_for(guild.me).administrator for channel in guild.channels][0]}{fmt.RESET}")
 
 		if interaction.user.id == 405414058775412746:
 			for page in paginator.pages:
 				await interaction.followup.send(content=page)
 
 	@app_commands.command(name="server", description="Donne des informations sur le serveur")
+	@commands.guild_only()
 	async def server(self, interaction: discord.Interaction):
 		"""Donne des informations sur le serveur"""
 		server_icon = interaction.guild.icon
